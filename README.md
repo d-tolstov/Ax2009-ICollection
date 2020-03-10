@@ -12,3 +12,6 @@
 
 ## Схема
 <img src="out\schema\ICollection.png" alt="схема">
+
+### Зависимости от других репозиториев
+* [SysEnumerators](https://github.com/mazzy-ax/SysEnumerators)
