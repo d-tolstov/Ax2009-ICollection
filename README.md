@@ -9,3 +9,6 @@
 
 Отнаследовать от :
 * `Enumerable`
+
+## Схема
+<img src="out\schema\ICollection.png" alt="схема">

@@ -1,0 +1,51 @@
+@startuml "ICollection"
+
+interface Enumerable{
+    GetEnumerator() : Enumerator
+}
+
+interface ICollection{
+    Add(anytype item) : void
+    Count() : int
+    Contains(anytype item) : boolean
+}
+Enumerable <|-- ICollection
+
+class SysSet{
+    GetEnumerator() : SysEnumerator
+}
+ICollection <|.. SysSet
+
+class Set{
+}
+SysSet o-- Set
+
+class SysList{
+    GetEnumerator() : SysEnumerator
+}
+ICollection <|.. SysList
+
+class List{
+}
+SysList o-- List
+
+class SysEnumerator{
+}
+SysList o-- SysEnumerator
+SysSet o-- SysEnumerator
+
+interface Enumerator{
+}
+SysEnumerator ..|> Enumerator
+
+class SysListCLR{
+    Add(System.Object item) : void
+    Contains(System.Object item) : boolean
+}
+ICollection <|.. SysListCLR
+
+class List_T{
+}
+SysListCLR o-- List_T
+
+@enduml
