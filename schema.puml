@@ -12,7 +12,7 @@ interface ICollection{
 Enumerable <|-- ICollection
 
 class SysSet{
-    GetEnumerator() : SysEnumerator
+    GetEnumerator() : SetEnumerator
 }
 ICollection <|.. SysSet
 
@@ -20,32 +20,36 @@ class Set{
 }
 SysSet o-- Set
 
+class SetEnumerator{
+}
+SysSet o-- SetEnumerator
+
 class SysList{
-    GetEnumerator() : SysEnumerator
+    GetEnumerator() : ListEnumerator
 }
 ICollection <|.. SysList
+
+class ListEnumerator{
+}
+SysList o-- ListEnumerator
 
 class List{
 }
 SysList o-- List
 
-class SysEnumerator{
-}
-SysList o-- SysEnumerator
-SysSet o-- SysEnumerator
-
 interface Enumerator{
 }
-SysEnumerator ..|> Enumerator
+SetEnumerator ..|> Enumerator
+ListEnumerator ..|> Enumerator
 
 class SysListCLR{
-    Add(System.Object item) : void
-    Contains(System.Object item) : boolean
 }
 ICollection <|.. SysListCLR
 
-class List_T{
+package System.Collections.Generic{
+    class List(T){
+    }
+    SysListCLR o-- "List(T)"
 }
-SysListCLR o-- List_T
 
 @enduml
