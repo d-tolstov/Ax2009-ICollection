@@ -5,7 +5,7 @@ interface Enumerable{
 }
 
 interface ICollection{
-    Add(anytype item) : void
+    Add(anytype item) : ICollection
     Count() : int
     Contains(anytype item) : boolean
 }
@@ -13,6 +13,7 @@ Enumerable <|-- ICollection
 
 class SysSet{
     GetEnumerator() : SetEnumerator
+    Add(anytype item) : SysSet
 }
 ICollection <|.. SysSet
 
@@ -26,6 +27,7 @@ SysSet o-- SetEnumerator
 
 class SysList{
     GetEnumerator() : ListEnumerator
+    Add(anytype item) : SysList
 }
 ICollection <|.. SysList
 
@@ -43,8 +45,19 @@ SetEnumerator ..|> Enumerator
 ListEnumerator ..|> Enumerator
 
 class SysListCLR{
+    GetEnumerator() : SysEnumerator_SystemCollection
+    Add(anytype item) : SysListCLR
 }
 ICollection <|.. SysListCLR
+
+class SysEnumerator_SystemCollection{
+}
+SysListCLR o-- SysEnumerator_SystemCollection
+
+interface ISysEnumerator{
+}
+SysEnumerator_SystemCollection ..|> ISysEnumerator
+ISysEnumerator --|> Enumerator
 
 package System.Collections.Generic{
     class List(T){
