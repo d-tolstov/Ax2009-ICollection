@@ -68,6 +68,8 @@ SysEnumerator_SystemCollection ..|> ISysEnumerator
 ISysEnumerator --|> Enumerator
 
 package System.Collections.Generic{
+    interface ICollection(T){
+    }
     SysICollectionCLR o-- "ICollection(T)"
     SysListCLR o-- "List(T)"
     "List(T)" ..|> "ICollection(T)"
