@@ -1,0 +1,646 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: ICollection выгружен
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  INTERFACE #ICollection
+    PROPERTIES
+      Name                #ICollection
+      Extends             #Enumerable
+      RunOn               #Called from
+    ENDPROPERTIES
+    
+    METHODS
+      Version: 3
+      SOURCE #Add
+        #ICollection Add( anytype item)
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #classDeclaration
+        #/// <summary>
+        #/// Аналог интерфейса ICollection<T>
+        #/// https://docs.microsoft.com/ru-ru/dotnet/api/system.collections.generic.icollection-1?view=netframework-4.8
+        #/// </summary>
+        #/// <remarks>
+        #///
+        #/// </remarks>
+        #interface ICollection extends Enumerable
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #Contains
+        #boolean Contains( anytype item)
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #Count
+        #int Count()
+        #{
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: SysSet выгружен
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #SysSet
+    PROPERTIES
+      Name                #SysSet
+      Extends             #
+      RunOn               #Called from
+    ENDPROPERTIES
+    
+    METHODS
+      Version: 3
+      SOURCE #Add
+        #SysSet Add(anytype item)
+        #{
+        #;
+        #    set.add( item);
+        #    return this;
+        #}
+      ENDSOURCE
+      SOURCE #classDeclaration
+        #/// <summary>
+        #/// Обертка для класса Set , реализующая интерфейс ICollection
+        #///
+        #/// Варианты инициализации :
+        #///    - на основе ранее созданного Set
+        #///         SysSet::constructSet( set)
+        #///    - новый Set с указанием типа
+        #///         SysSet::constructType( Types::Integer)
+        #///
+        #/// </summary>
+        #/// <remarks>
+        #///
+        #/// </remarks>
+        #class SysSet implements ICollection
+        #{
+        #    Set     set;
+        #}
+      ENDSOURCE
+      SOURCE #Contains
+        #boolean Contains(anytype item)
+        #{
+        #    return set.in(item);
+        #}
+      ENDSOURCE
+      SOURCE #Count
+        #int Count()
+        #{
+        #    return set.elements();
+        #}
+      ENDSOURCE
+      SOURCE #GetEnumerator
+        #SetEnumerator GetEnumerator()
+        #{
+        #    return set.getEnumerator();
+        #}
+      ENDSOURCE
+      SOURCE #new
+        #void new( Set _set)
+        #{
+        #;
+        #    if ( !_set)
+        #        throw Error(strfmt("В функцию %1 не передан параметр _set!", funcname()));
+        #
+        #    set = _set;
+        #}
+      ENDSOURCE
+      SOURCE #set
+        #Set set()
+        #{
+        #    return set;
+        #}
+      ENDSOURCE
+      SOURCE #constructSet
+        #static SysSet constructSet(Set _set)
+        #{
+        #    return new SysSet(_set);
+        #}
+      ENDSOURCE
+      SOURCE #constructType
+        #static SysSet constructType(Types _type)
+        #{
+        #    return SysSet::constructSet( new Set(_type));
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: SysList выгружен
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #SysList
+    PROPERTIES
+      Name                #SysList
+      Extends             #
+      RunOn               #Called from
+    ENDPROPERTIES
+    
+    METHODS
+      Version: 3
+      SOURCE #Add
+        #SysList Add(anytype item)
+        #{
+        #;
+        #    list.addEnd( item);
+        #}
+      ENDSOURCE
+      SOURCE #classDeclaration
+        #/// <summary>
+        #/// Обертка для класса List , реализующая интерфейс ICollection
+        #///
+        #/// Варианты инициализации :
+        #///    - на основе ранее созданного List
+        #///         SysList::constructList( list)
+        #///    - новый List с указанием типа
+        #///         SysList::constructType( Types::Integer)
+        #///
+        #/// </summary>
+        #/// <remarks>
+        #///
+        #/// </remarks>
+        #class SysList implements ICollection
+        #{
+        #    List    list;
+        #}
+      ENDSOURCE
+      SOURCE #Contains
+        #boolean Contains(anytype item)
+        #{
+        #    Enumerator  enumerator = this.GetEnumerator();
+        #    boolean     ret;
+        #;
+        #    while ( enumerator.moveNext())
+        #    {
+        #        if ( enumerator.current() == item)
+        #        {
+        #            ret = true;
+        #            break;
+        #        }
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #Count
+        #int Count()
+        #{
+        #    return list.elements();
+        #}
+      ENDSOURCE
+      SOURCE #GetEnumerator
+        #ListEnumerator GetEnumerator()
+        #{
+        #    return list.getEnumerator();
+        #}
+      ENDSOURCE
+      SOURCE #list
+        #List list()
+        #{
+        #    return list;
+        #}
+      ENDSOURCE
+      SOURCE #new
+        #void new( List _list)
+        #{
+        #;
+        #    if ( !_list)
+        #        throw Error(strfmt("В функцию %1 не передан параметр _list!", funcname()));
+        #
+        #    list = _list;
+        #}
+      ENDSOURCE
+      SOURCE #constructList
+        #static SysList constructList(List _list)
+        #{
+        #    return new SysList(_list);
+        #}
+      ENDSOURCE
+      SOURCE #constructType
+        #static SysList constructType(Types _type)
+        #{
+        #    return SysList::constructList( new List(_type));
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: SysICollectionCLR выгружен
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #SysICollectionCLR
+    PROPERTIES
+      Name                #SysICollectionCLR
+      Extends             #
+      RunOn               #Called from
+    ENDPROPERTIES
+    
+    METHODS
+      Version: 3
+      SOURCE #Add
+        #SysICollectionCLR Add(anytype item)
+        #{
+        #;
+        #    this.invoke( collection, "Add", this.params( this.getObjectForAnyType(item)));
+        #
+        #    return this;
+        #}
+      ENDSOURCE
+      SOURCE #classDeclaration
+        #/// <summary>
+        #/// Обертка для класса System.Collections.Generic.ICollection<T> , реализующая интерфейс ICollection
+        #///
+        #/// Варианты инициализации :
+        #///    - на основе ранее созданного System.Collections.Generic.ICollection<T>
+        #///         SysICollectionCLR::constructCollection( collection)
+        #///
+        #/// </summary>
+        #/// <remarks>
+        #///
+        #/// </remarks>
+        #class SysICollectionCLR implements ICollection
+        #{
+        #    System.Collections.IEnumerable  collection;
+        #}
+      ENDSOURCE
+      SOURCE #collection
+        #System.Object collection()
+        #{
+        #    return collection;
+        #}
+      ENDSOURCE
+      SOURCE #Contains
+        #boolean Contains(anytype item)
+        #{
+        #    Enumerator  enumerator = this.GetEnumerator();
+        #    boolean     ret;
+        #;
+        #    while ( enumerator.moveNext())
+        #    {
+        #        if ( enumerator.current() == item)
+        #        {
+        #            ret = true;
+        #            break;
+        #        }
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #Count
+        #int Count()
+        #{
+        #    int ret;
+        #;
+        #    ret = this.invoke( collection, "Count");
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #GetEnumerator
+        #ISysEnumerator GetEnumerator()
+        #{
+        #    return SysEnumerator::newFromSystemCollection( collection);
+        #}
+      ENDSOURCE
+      SOURCE #getObjectForAnyType
+        #protected System.Object getObjectForAnyType(anytype item)
+        #{
+        #    System.Object       clrObject;
+        #    SysICollectionCLR   collectionCLR;
+        #    ClassId             classId;
+        #;
+        #    if ( typeof(item) == Types::Class)
+        #    {
+        #        classId = classidget(item);
+        #        switch ( classId)
+        #        {
+        #            case classnum(CLRObject):
+        #                clrObject   = item;
+        #                break;
+        #            default:
+        #                if ( SysDictClass::isEqualOrSuperclass( classId, classnum(SysICollectionCLR)))
+        #                {
+        #                    collectionCLR   = item;
+        #                    clrObject       = collectionCLR.collection();
+        #                }
+        #                else
+        #                    clrObject       = CLRInterop::getObjectForAnyType( item);
+        #                break;
+        #        }
+        #    }
+        #    else
+        #        clrObject   = CLRInterop::getObjectForAnyType( item);
+        #
+        #    return clrObject;
+        #}
+      ENDSOURCE
+      SOURCE #invoke
+        #protected System.Object invoke(
+        #    System.Object      _class
+        #  , str                _methodName
+        #  , Array              _parameters  = new Array(Types::Class)
+        #  , boolean            _overloaded  = false
+        #)
+        #{
+        #    System.Type                         classType      = _class.GetType();
+        #    System.Type                         parameterType;
+        #    int                                 i = _parameters.lastIndex();
+        #    //BP deviation documented
+        #    System.Type[]                       parameterTypes = new System.Type[i]();
+        #    //BP deviation documented
+        #    System.Object[]                     parameters     = new System.Object[i]();
+        #    System.Object                       parameter;
+        #
+        #    System.Reflection.MethodInfo        methodInfo;
+        #    System.Reflection.PropertyInfo      propertyInfo;
+        #    System.Object                       ret;
+        #
+        #    System.Exception                    e;
+        #
+        #    System.Reflection.MethodInfo[]      methods;
+        #    int                                 methodsQty, methodParametersQty, j;
+        #    str                                 methodName;
+        #    System.Reflection.ParameterInfo[]   methodParameters;
+        #    System.Reflection.ParameterInfo     methodParameterInfo;
+        #    System.Type                         methodParameterType;
+        #    boolean                             parametersEqual;
+        #
+        #    try
+        #    {
+        #        for (i = 1; i <= _parameters.lastIndex(); i++)
+        #        {
+        #            parameter = _parameters.value(i);
+        #            parameterType = parameter.GetType();
+        #            parameterTypes.SetValue(parameterType, i - 1);
+        #            parameters.SetValue(parameter, i - 1);
+        #        }
+        #
+        #        if (_overloaded)
+        #        {
+        #            methodInfo = classType.GetMethod(_methodName, parameterTypes); //Gets overload with parameters specified
+        #
+        #            if (! methodInfo)
+        #            {
+        #                methods     = classType.GetMethods();
+        #                methodsQty  = methods.get_Length();
+        #
+        #                for (i = 1; i <= methodsQty; i++)
+        #                {
+        #                    methodInfo          = methods.GetValue(i-1);
+        #                    methodName          = methodInfo.get_Name();
+        #
+        #                    if (methodName == _methodName)
+        #                    {
+        #                        methodParameters     = methodInfo.GetParameters();
+        #                        methodParametersQty  = methodParameters.get_Length();
+        #
+        #                        if (methodParametersQty == _parameters.lastIndex())
+        #                        {
+        #                            parametersEqual = true;
+        #
+        #                            for (j = 1; j <= methodParametersQty; j++)
+        #                            {
+        #                                methodParameterInfo  = methodParameters.GetValue(j-1);
+        #                                methodParameterType  = methodParameterInfo.get_ParameterType();
+        #                                parameter                   = _parameters.value(j);
+        #                                parameterType               = parameter.GetType();
+        #
+        #                                if (! methodParameterType.Equals(parameterType))
+        #                                {
+        #                                    parametersEqual = false;
+        #                                }
+        #                            }
+        #
+        #                            if (parametersEqual)
+        #                            {
+        #                                break;
+        #                            }
+        #                            else
+        #                            {
+        #                                methodInfo = null;
+        #                            }
+        #                        }
+        #                    }
+        #                }
+        #            }
+        #        }
+        #        else
+        #        {
+        #            methodInfo = classType.GetMethod(_methodName);
+        #        }
+        #
+        #        if ( !CLRInterop::isNull(methodInfo))
+        #        {
+        #            ret = methodInfo.Invoke( _class, parameters);
+        #        }
+        #        else
+        #        {
+        #            propertyInfo    = classType.GetProperty(_methodName);
+        #            if ( !CLRInterop::isNull(propertyInfo))
+        #            {
+        #                ret = propertyInfo.GetValue( _class);
+        #            }
+        #            else
+        #                throw Error(strfmt("Метод %1 в классе %2 не найден!", _methodName, CLRInterop::getAnyTypeForObject(classType.ToString())));
+        #        }
+        #    }
+        #    catch (Exception::CLRError)
+        #    {
+        #        throw error(AifUtil::getClrErrorMessage());
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #new
+        #void new( System.Object _collection)
+        #{
+        #;
+        #    if ( CLRInterop::isNull(_collection))
+        #        throw Error(strfmt("В функцию %1 не передан параметр _collection!", funcname()));
+        #
+        #    collection = _collection;
+        #}
+      ENDSOURCE
+      SOURCE #params
+        #protected Array params(
+        #    System.Object _parameter1
+        #  , System.Object _parameter2 = null
+        #  , System.Object _parameter3 = null
+        #)
+        #{
+        #    Array   params;
+        #;
+        #    params  = new Array(Types::Class);
+        #    params.value( 1, _parameter1);
+        #    if ( !prmisdefault(_parameter2))
+        #    {
+        #        params.value( 2, _parameter2);
+        #    }
+        #    if ( !prmisdefault(_parameter3))
+        #    {
+        #        params.value( 3, _parameter3);
+        #    }
+        #
+        #    return params;
+        #}
+      ENDSOURCE
+      SOURCE #constructCollection
+        #static SysICollectionCLR constructCollection( System.Object _collection)
+        #{
+        #    return new SysICollectionCLR(_collection);
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: SysListCLR выгружен
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #SysListCLR
+    PROPERTIES
+      Name                #SysListCLR
+      Extends             #SysICollectionCLR
+      RunOn               #Called from
+    ENDPROPERTIES
+    
+    METHODS
+      Version: 3
+      SOURCE #classDeclaration
+        #/// <summary>
+        #/// Обертка для класса System.Collections.Generic.List<T> , реализующая интерфейс ICollection
+        #///
+        #/// Варианты инициализации :
+        #///    - на основе ранее созданного System.Collections.Generic.List
+        #///         SysListCLR::constructList( list)
+        #///    - новый List с указанием названия типа
+        #///         SysListCLR::constructTypeName( "System.String")
+        #///    - новый List с указанием типа
+        #///         SysListCLR::constructType( System.Type::GetType("System.String"))
+        #///
+        #/// </summary>
+        #/// <remarks>
+        #///
+        #/// </remarks>
+        #class SysListCLR extends SysICollectionCLR
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #constructList
+        #static SysListCLR constructList( System.Object _list)
+        #{
+        #    return new SysListCLR(_list);
+        #}
+      ENDSOURCE
+      SOURCE #constructType
+        #static SysListCLR constructType(System.Type _type)
+        #{
+        #;
+        #    if ( CLRInterop::isNull(_type))
+        #        throw Error(strfmt("В функцию %1 не передан параметр _type!", funcname()));
+        #
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
+        #    return SysListCLR::constructTypeName( _type.ToString());
+        #}
+      ENDSOURCE
+      SOURCE #constructTypeName
+        #static SysListCLR constructTypeName( str _typeStr = "System.Object")
+        #{
+        #    System.Type         listType;
+        #    System.Object       list;
+        #;
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
+        #    listType    = SysCLRType::newFromTypeName( strfmt( "System.Collections.Generic.List`1[%1]", _typeStr)).parmClrType();
+        #    list        = System.Activator::CreateInstance( listType);
+        #
+        #    return SysListCLR::constructList( list);
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: PRN
+
+; Microsoft Dynamics AX Project : ICollection unloaded
+; --------------------------------------------------------------------------------
+  PROJECTVERSION 2
+  
+  PROJECT #ICollection
+   SHARED
+  PROPERTIES
+    Name                #ICollection
+  ENDPROPERTIES
+  
+    PROJECTCLASS ProjectNode
+    GROUP #Classes
+      PROPERTIES
+        Name                #Classes
+        ProjectGroupType    #Classes
+        GroupMask           #
+        PreventEditProperties #No
+      ENDPROPERTIES
+      
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 45
+        UTILOBJECTID 41876
+        NODETYPE 329
+        NAME #ICollection
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 45
+        UTILOBJECTID 41878
+        NODETYPE 329
+        NAME #SysSet
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 45
+        UTILOBJECTID 41879
+        NODETYPE 329
+        NAME #SysList
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 45
+        UTILOBJECTID 41881
+        NODETYPE 329
+        NAME #SysICollectionCLR
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 45
+        UTILOBJECTID 41880
+        NODETYPE 329
+        NAME #SysListCLR
+      ENDNODE
+      ENDGROUP
+      
+  ENDPROJECT
+  
+
+***Element: END
