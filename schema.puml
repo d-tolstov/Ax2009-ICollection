@@ -44,15 +44,23 @@ interface Enumerator{
 SetEnumerator ..|> Enumerator
 ListEnumerator ..|> Enumerator
 
-class SysListCLR{
+class SysICollectionCLR{
     GetEnumerator() : SysEnumerator_SystemCollection
-    Add(anytype item) : SysListCLR
+    Add(anytype item) : SysICollectionCLR
 }
-ICollection <|.. SysListCLR
+ICollection <|.. SysICollectionCLR
+
+class SysListCLR{
+}
+SysICollectionCLR <|-- SysListCLR
+
+class SysSetCLR{
+}
+SysICollectionCLR <|-- SysSetCLR
 
 class SysEnumerator_SystemCollection{
 }
-SysListCLR o-- SysEnumerator_SystemCollection
+SysICollectionCLR o-- SysEnumerator_SystemCollection
 
 interface ISysEnumerator{
 }
@@ -60,9 +68,11 @@ SysEnumerator_SystemCollection ..|> ISysEnumerator
 ISysEnumerator --|> Enumerator
 
 package System.Collections.Generic{
-    class List(T){
-    }
+    SysICollectionCLR o-- "ICollection(T)"
     SysListCLR o-- "List(T)"
+    "List(T)" ..|> "ICollection(T)"
+    SysSetCLR o-- "SortedSet(T)"
+    "SortedSet(T)" ..|> "ICollection(T)"
 }
 
 @enduml
