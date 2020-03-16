@@ -6,6 +6,7 @@ interface Enumerable{
 
 interface ICollection{
     Add(anytype item) : ICollection
+    Remove(anytype item) : ICollection
     Count() : int
     Contains(anytype item) : boolean
     Except(ICollection collection) : ICollection
@@ -15,6 +16,7 @@ Enumerable <|-- ICollection
 class SysSet{
     GetEnumerator() : SetEnumerator
     Add(anytype item) : SysSet
+    Remove(anytype item) : SysSet
     Except(SysSet collection) : SysSet
 }
 ICollection <|.. SysSet
@@ -30,6 +32,7 @@ SysSet o-- SetEnumerator
 class SysList{
     GetEnumerator() : ListEnumerator
     Add(anytype item) : SysList
+    Remove(anytype item) : SysList
     Except(SysList collection) : SysList
 }
 ICollection <|.. SysList
@@ -50,6 +53,7 @@ ListEnumerator ..|> Enumerator
 class SysICollectionCLR{
     GetEnumerator() : SysEnumerator_SystemCollection
     Add(anytype item) : SysICollectionCLR
+    Remove(anytype item) : SysICollectionCLR
     Except(SysICollectionCLR collection) : SysICollectionCLR
 }
 ICollection <|.. SysICollectionCLR
