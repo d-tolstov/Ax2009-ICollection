@@ -43,6 +43,16 @@ Formatversion: 1
         #{
         #}
       ENDSOURCE
+      SOURCE #Except
+        #ICollection Except(ICollection _collection)
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #Remove
+        #ICollection Remove( anytype item)
+        #{
+        #}
+      ENDSOURCE
     ENDMETHODS
   ENDCLASS
 
@@ -100,6 +110,13 @@ Formatversion: 1
         #    return set.elements();
         #}
       ENDSOURCE
+      SOURCE #Except
+        #SysSet Except(SysSet _collection)
+        #{
+        #;
+        #    return SysSet::constructSet( Set::difference( this.set(), _collection.set()));
+        #}
+      ENDSOURCE
       SOURCE #GetEnumerator
         #SetEnumerator GetEnumerator()
         #{
@@ -114,6 +131,15 @@ Formatversion: 1
         #        throw Error(strfmt("В функцию %1 не передан параметр _set!", funcname()));
         #
         #    set = _set;
+        #}
+      ENDSOURCE
+      SOURCE #Remove
+        #SysSet Remove( anytype item)
+        #{
+        #;
+        #    this.set().remove(item);
+        #
+        #    return this;
         #}
       ENDSOURCE
       SOURCE #set
@@ -157,6 +183,8 @@ Formatversion: 1
         #{
         #;
         #    list.addEnd( item);
+        #
+        #    return this;
         #}
       ENDSOURCE
       SOURCE #classDeclaration
@@ -202,6 +230,22 @@ Formatversion: 1
         #    return list.elements();
         #}
       ENDSOURCE
+      SOURCE #Except
+        #SysList Except(SysList _collection)
+        #{
+        #    List        ret = new List( this.list().typeId());
+        #    Enumerator  enumerator;
+        #;
+        #    enumerator  = this.GetEnumerator();
+        #    while (enumerator.moveNext())
+        #    {
+        #        if ( !_collection.Contains( enumerator.current()))
+        #            ret.addEnd( enumerator.current());
+        #    }
+        #
+        #    return SysList::constructList( ret);
+        #}
+      ENDSOURCE
       SOURCE #GetEnumerator
         #ListEnumerator GetEnumerator()
         #{
@@ -222,6 +266,26 @@ Formatversion: 1
         #        throw Error(strfmt("В функцию %1 не передан параметр _list!", funcname()));
         #
         #    list = _list;
+        #}
+      ENDSOURCE
+      SOURCE #Remove
+        #SysList Remove( anytype item)
+        #{
+        #    ListIterator    iterator    = new ListIterator(this.list());
+        #;
+        #    iterator.begin();
+        #    while (iterator.more())
+        #    {
+        #        if ( iterator.value() == item)
+        #        {
+        #            iterator.delete();
+        #            break;
+        #        }
+        #
+        #        iterator.next();
+        #    }
+        #
+        #    return this;
         #}
       ENDSOURCE
       SOURCE #constructList
@@ -278,12 +342,42 @@ Formatversion: 1
         #class SysICollectionCLR implements ICollection
         #{
         #    System.Collections.IEnumerable  collection;
+        #    // Тип коллекции
+        #    System.Type                     collectionType;
+        #    str                             collectionTypeName;
+        #    // Тип элемента коллекции
+        #    System.Type                     itemType;
+        #    str                             itemTypeName;
         #}
       ENDSOURCE
       SOURCE #collection
         #System.Object collection()
         #{
         #    return collection;
+        #}
+      ENDSOURCE
+      SOURCE #collectionType
+        #System.Type collectionType()
+        #{
+        #;
+        #    if (collectionType)
+        #        return collectionType;
+        #
+        #    collectionType    = this.getCollectionType();
+        #
+        #    return collectionType;
+        #}
+      ENDSOURCE
+      SOURCE #collectionTypeName
+        #str collectionTypeName()
+        #{
+        #;
+        #    if (collectionTypeName)
+        #        return collectionTypeName;
+        #
+        #    collectionTypeName    = this.getCollectionTypeName();
+        #
+        #    return collectionTypeName;
         #}
       ENDSOURCE
       SOURCE #Contains
@@ -314,10 +408,76 @@ Formatversion: 1
         #    return ret;
         #}
       ENDSOURCE
+      SOURCE #Except
+        #SysICollectionCLR Except(SysICollectionCLR _collection)
+        #{
+        #    SysICollectionCLR   ret;
+        #    Enumerator          enumerator;
+        #;
+        #    ret = SysICollectionCLR::constructCollectionTypeName( _collection.collectionTypeName());
+        #
+        #    // Так как в Ax2009 не удалось использовать класс Enumerable из System.Linq
+        #    // приходится извращаться с Enumerator чтобы симитировать функцию Except
+        #    enumerator  = this.GetEnumerator();
+        #    while (enumerator.moveNext())
+        #    {
+        #        if ( !_collection.Contains(enumerator.current()))
+        #        {
+        #            ret.Add( enumerator.current());
+        #        }
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #getCollectionType
+        #protected System.Type getCollectionType()
+        #{
+        #    System.Object                   object = this.collection();
+        #    System.Type                     typeObject;
+        #;
+        #    typeObject      = object.GetType();
+        #    return typeObject;
+        #}
+      ENDSOURCE
+      SOURCE #getCollectionTypeName
+        #protected str getCollectionTypeName()
+        #{
+        #    str                             ret;
+        #;
+        #    ret = this.collectionType().ToString();
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
       SOURCE #GetEnumerator
         #ISysEnumerator GetEnumerator()
         #{
         #    return SysEnumerator::newFromSystemCollection( collection);
+        #}
+      ENDSOURCE
+      SOURCE #getItemType
+        #protected System.Type getItemType()
+        #{
+        #    System.Object                   object = this.collection();
+        #    System.Type                     typeObject;
+        #    System.Reflection.PropertyInfo  propertyObject;
+        #    System.Type                     itemTypeObject;
+        #;
+        #    typeObject      = object.GetType();
+        #    propertyObject  = typeObject.GetProperty("Item");
+        #    itemTypeObject  = propertyObject.get_PropertyType();
+        #    return itemTypeObject;
+        #}
+      ENDSOURCE
+      SOURCE #getItemTypeName
+        #protected str getItemTypeName()
+        #{
+        #    str                             ret;
+        #;
+        #    ret = this.itemType().ToString();
+        #
+        #    return ret;
         #}
       ENDSOURCE
       SOURCE #getObjectForAnyType
@@ -325,6 +485,7 @@ Formatversion: 1
         #{
         #    System.Object       clrObject;
         #    SysICollectionCLR   collectionCLR;
+        #    SysIDictionaryCLR   dictCLR;
         #    ClassId             classId;
         #;
         #    if ( typeof(item) == Types::Class)
@@ -342,12 +503,26 @@ Formatversion: 1
         #                    clrObject       = collectionCLR.collection();
         #                }
         #                else
+        #                if ( SysDictClass::isEqualOrSuperclass( classId, classnum(SysIDictionaryCLR)))
+        #                {
+        #                    dictCLR     = item;
+        #                    clrObject   = dictCLR.dictionary();
+        #                }
+        #                else
+        #                {
+        #                    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
         #                    clrObject       = CLRInterop::getObjectForAnyType( item);
+        #                }
         #                break;
         #        }
         #    }
         #    else
+        #    {
+        #        new InteropPermission(InteropKind::ClrInterop).assert();
+        #
         #        clrObject   = CLRInterop::getObjectForAnyType( item);
+        #    }
         #
         #    return clrObject;
         #}
@@ -360,13 +535,13 @@ Formatversion: 1
         #  , boolean            _overloaded  = false
         #)
         #{
-        #    System.Type                         classType      = _class.GetType();
+        #    System.Type                         classType;
         #    System.Type                         parameterType;
         #    int                                 i = _parameters.lastIndex();
         #    //BP deviation documented
-        #    System.Type[]                       parameterTypes = new System.Type[i]();
+        #    System.Type[]                       parameterTypes;
         #    //BP deviation documented
-        #    System.Object[]                     parameters     = new System.Object[i]();
+        #    System.Object[]                     parameters;
         #    System.Object                       parameter;
         #
         #    System.Reflection.MethodInfo        methodInfo;
@@ -385,6 +560,12 @@ Formatversion: 1
         #
         #    try
         #    {
+        #        new InteropPermission(InteropKind::ClrInterop).assert();
+        #
+        #        classType       = _class.GetType();
+        #        parameterTypes  = new System.Type[i]();
+        #        parameters      = new System.Object[i]();
+        #
         #        for (i = 1; i <= _parameters.lastIndex(); i++)
         #        {
         #            parameter = _parameters.value(i);
@@ -470,6 +651,181 @@ Formatversion: 1
         #    return ret;
         #}
       ENDSOURCE
+      SOURCE #invokeGeneric
+        #/// <summary>
+        #/// Invokes generic method
+        #/// </summary>
+        #/// <param name="_class">
+        #/// Object which method should be invoked
+        #/// </param>
+        #/// <param name="_methodName">
+        #/// Name of method
+        #/// </param>
+        #/// <param name="_type">
+        #/// Required type
+        #/// </param>
+        #/// <param name="_parameters">
+        #/// array of parameters for execution
+        #/// </param>
+        #/// <param name="_overloaded">
+        #/// Is method overloaded
+        #/// </param>
+        #/// <returns>
+        #/// Return value of invoked method
+        #/// </returns>
+        #/// <exception cref="Exception::Error">
+        #/// If error occur when executing method
+        #/// </exception>
+        #protected System.Object invokeGeneric(
+        #    System.Object   _class
+        #  , str             _methodName
+        #  , System.Type     _type
+        #  , Array           _parameters
+        #  , boolean         _overloaded = false
+        #)
+        #{
+        #    System.Type                  classType      = _class.GetType();
+        #    System.Type                  parameterType;
+        #    int                          i = _parameters.lastIndex();
+        #    //BP deviation documented
+        #    System.Type[]                parameterTypes = new System.Type[i]();
+        #    //BP deviation documented
+        #    System.Type[]                methodType     = new System.Type[1]();
+        #    //BP deviation documented
+        #    System.Object[]              parameters     = new System.Object[i]();
+        #    System.Object                parameter;
+        #
+        #    System.Reflection.MethodInfo methodInfo;
+        #    System.Object                ret;
+        #
+        #    System.Exception             e;
+        #
+        #    System.Reflection.MethodInfo[]      methods;
+        #    int                                 methodsQty, genericMethodParametersQty, j;
+        #    str                                 genericMethodName;
+        #    System.Reflection.ParameterInfo[]   genericMethodParameters;
+        #    System.Reflection.ParameterInfo     genericMethodParameterInfo;
+        #    System.Type                         genericMethodParameterType;
+        #    System.Reflection.MethodInfo        genericMethodInfo;
+        #    boolean                             parametersEqual;
+        #
+        #    try
+        #    {
+        #        for (i = 1; i <= _parameters.lastIndex(); i++)
+        #        {
+        #            parameter = _parameters.value(i);
+        #            parameterType = parameter.GetType();
+        #            parameterTypes.SetValue(parameterType, i - 1);
+        #            parameters.SetValue(parameter, i - 1);
+        #        }
+        #
+        #        methodType.SetValue(_type, 0);
+        #
+        #        if (_overloaded)
+        #        {
+        #            methodInfo = classType.GetMethod(_methodName, parameterTypes); //Gets overload with parameters specified
+        #
+        #            if (! methodInfo)
+        #            {
+        #                methods     = classType.GetMethods();
+        #                methodsQty  = methods.get_Length();
+        #
+        #                for (i = 1; i <= methodsQty; i++)
+        #                {
+        #                    methodInfo          = methods.GetValue(i-1);
+        #                    genericMethodName   = methodInfo.get_Name();
+        #                    info( genericMethodName);
+        #
+        #                    if (genericMethodName == _methodName)
+        #                    {
+        #                        genericMethodInfo           = methodInfo.MakeGenericMethod(methodType);
+        #                        genericMethodParameters     = genericMethodInfo.GetParameters();
+        #                        genericMethodParametersQty  = genericMethodParameters.get_Length();
+        #
+        #                        if (genericMethodParametersQty == _parameters.lastIndex())
+        #                        {
+        #                            parametersEqual = true;
+        #
+        #                            for (j = 1; j <= genericMethodParametersQty; j++)
+        #                            {
+        #                                genericMethodParameterInfo  = genericMethodParameters.GetValue(j-1);
+        #                                genericMethodParameterType  = genericMethodParameterInfo.get_ParameterType();
+        #                                parameter                   = _parameters.value(j);
+        #                                parameterType               = parameter.GetType();
+        #
+        #                                if (! genericMethodParameterType.Equals(parameterType))
+        #                                {
+        #                                    parametersEqual = false;
+        #                                }
+        #                            }
+        #
+        #                            if (parametersEqual)
+        #                            {
+        #                                break;
+        #                            }
+        #                            else
+        #                            {
+        #                                methodInfo = null;
+        #                            }
+        #                        }
+        #                    }
+        #                    else
+        #                    {
+        #                        methodInfo = null;
+        #                    }
+        #                }
+        #            }
+        #        }
+        #        else
+        #        {
+        #            methodInfo = classType.GetMethod(_methodName);
+        #        }
+        #
+        #        if ( CLRInterop::isNull(methodInfo))
+        #            throw Error( strfmt("Метод %1<%2> в классе %3 не найден!"
+        #                       , _methodName
+        #                       , CLRInterop::getAnyTypeForObject(_type.ToString())
+        #                       , CLRInterop::getAnyTypeForObject(classType.ToString()))
+        #                       );
+        #
+        #        methodInfo = methodInfo.MakeGenericMethod(methodType);         //Gets generic method of specified type(s)
+        #
+        #        ret = methodInfo.Invoke(_class, parameters);
+        #    }
+        #    catch (Exception::CLRError)
+        #    {
+        #        //BP deviation documented
+        #        e = CLRInterop::getLastException();
+        #        throw error(e.ToString());
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #itemType
+        #System.Type itemType()
+        #{
+        #;
+        #    if (itemType)
+        #        return itemType;
+        #
+        #    itemType    = this.getItemType();
+        #
+        #    return itemType;
+        #}
+      ENDSOURCE
+      SOURCE #itemTypeName
+        #str itemTypeName()
+        #{
+        #;
+        #    if (itemTypeName)
+        #        return itemTypeName;
+        #
+        #    itemTypeName    = this.getItemTypeName();
+        #
+        #    return itemTypeName;
+        #}
+      ENDSOURCE
       SOURCE #new
         #void new( System.Object _collection)
         #{
@@ -503,10 +859,35 @@ Formatversion: 1
         #    return params;
         #}
       ENDSOURCE
+      SOURCE #Remove
+        #SysICollectionCLR Remove(anytype item)
+        #{
+        #;
+        #    this.invoke( collection, "Remove", this.params( this.getObjectForAnyType(item)));
+        #
+        #    return this;
+        #}
+      ENDSOURCE
       SOURCE #constructCollection
         #static SysICollectionCLR constructCollection( System.Object _collection)
         #{
         #    return new SysICollectionCLR(_collection);
+        #}
+      ENDSOURCE
+      SOURCE #constructCollectionTypeName
+        #protected static SysICollectionCLR constructCollectionTypeName(
+        #    str _collectionTypeName
+        #)
+        #{
+        #    System.Type         collectionType;
+        #    System.Object       collection;
+        #;
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
+        #    collectionType    = SysCLRType::newFromTypeName( _collectionTypeName).parmClrType();
+        #    collection        = System.Activator::CreateInstance( collectionType);
+        #
+        #    return SysICollectionCLR::constructCollection( collection);
         #}
       ENDSOURCE
     ENDMETHODS
@@ -553,8 +934,8 @@ Formatversion: 1
         #    return new SysListCLR(_list);
         #}
       ENDSOURCE
-      SOURCE #constructType
-        #static SysListCLR constructType(System.Type _type)
+      SOURCE #constructTypeCLR
+        #static SysListCLR constructTypeCLR(System.Type _type)
         #{
         #;
         #    if ( CLRInterop::isNull(_type))
@@ -566,17 +947,430 @@ Formatversion: 1
         #}
       ENDSOURCE
       SOURCE #constructTypeName
-        #static SysListCLR constructTypeName( str _typeStr = "System.Object")
+        #static SysListCLR constructTypeName( str _itemTypeName = "System.Object")
         #{
-        #    System.Type         listType;
-        #    System.Object       list;
+        #    return SysICollectionCLR::constructCollectionTypeName( strfmt( "System.Collections.Generic.List`1[%1]", _itemTypeName));
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: SysSetTest выгружен
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #SysSetTest
+    PROPERTIES
+      Name                #SysSetTest
+      Extends             #SysTestCase
+      RunOn               #Called from
+    ENDPROPERTIES
+    
+    METHODS
+      Version: 3
+      SOURCE #classDeclaration
+        #class SysSetTest extends SysTestCase
+        #{
+        #    SysSet     sysSet;
+        #}
+      ENDSOURCE
+      SOURCE #constructSet
+        #protected void constructSet( Set _set)
+        #{
         #;
-        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #    sysSet  = SysSet::constructSet( _set);
+        #}
+      ENDSOURCE
+      SOURCE #constructType
+        #protected void constructType( Types _type)
+        #{
+        #;
+        #    sysSet  = SysSet::constructType( _type);
+        #}
+      ENDSOURCE
+      SOURCE #testAdd
+        #void testAdd()
+        #{
+        #;
+        #    this.constructType( Types::Integer);
+        #    sysSet.Add(10);
+        #    this.assertEquals( 1, sysSet.Count());
+        #    sysSet.Add(20);
+        #    this.assertEquals( 2, sysSet.Count());
+        #}
+      ENDSOURCE
+      SOURCE #testConstructSet
+        #void testConstructSet()
+        #{
+        #;
+        #    this.constructSet( new Set(Types::String));
+        #    this.assertNotNull(sysSet);
+        #}
+      ENDSOURCE
+      SOURCE #testConstructType
+        #void testConstructType()
+        #{
+        #;
+        #    this.constructType( Types::String);
+        #    this.assertNotNull(sysSet);
+        #}
+      ENDSOURCE
+      SOURCE #testContains
+        #void testContains()
+        #{
+        #;
+        #    this.constructType( Types::Integer);
+        #    sysSet.Add(10);
+        #    sysSet.Add(20);
         #
-        #    listType    = SysCLRType::newFromTypeName( strfmt( "System.Collections.Generic.List`1[%1]", _typeStr)).parmClrType();
-        #    list        = System.Activator::CreateInstance( listType);
+        #    this.assertTrue( sysSet.Contains(20));
+        #    this.assertFalse( sysSet.Contains(30));
+        #}
+      ENDSOURCE
+      SOURCE #testCount
+        #void testCount()
+        #{
+        #;
+        #    this.constructType( Types::Integer);
+        #    this.assertEquals( 0, sysSet.Count());
         #
-        #    return SysListCLR::constructList( list);
+        #    sysSet.set().add(10);
+        #    this.assertEquals( 1, sysSet.Count());
+        #}
+      ENDSOURCE
+      SOURCE #testExcept
+        #void testExcept()
+        #{
+        #;
+        #    sysSet  = SysSet::constructType(Types::String)
+        #        .Add("01")
+        #        .Add("02")
+        #        .Add("03")
+        #        .Add("04")
+        #        .Add("05")
+        #        .Except( SysSet::constructType(Types::String)
+        #            .Add("02")
+        #            .Add("03")
+        #        )
+        #    ;
+        #    this.assertNotNull(sysSet);
+        #    this.assertEquals( 3, sysSet.Count());
+        #}
+      ENDSOURCE
+      SOURCE #testGetEnumerator
+        #void testGetEnumerator()
+        #{
+        #    Enumerator  enumerator;
+        #    int         i;
+        #;
+        #    this.constructType(Types::Integer);
+        #    sysSet.Add(10);
+        #    sysSet.Add(20);
+        #
+        #    enumerator  = sysSet.GetEnumerator();
+        #    this.assertNotNull( enumerator);
+        #
+        #    while (enumerator.moveNext())
+        #    {
+        #        i++;
+        #    }
+        #    this.assertEquals( 2, i);
+        #}
+      ENDSOURCE
+      SOURCE #testRemove
+        #void testRemove()
+        #{
+        #;
+        #    sysSet = SysSet::constructType(Types::Integer);
+        #    sysSet.Add(10);
+        #    this.assertEquals( 1, sysSet.Count());
+        #    sysSet.Add(20);
+        #    this.assertEquals( 2, sysSet.Count());
+        #    sysSet.Remove(30);
+        #    this.assertEquals( 2, sysSet.Count());
+        #    sysSet.Remove(20);
+        #    this.assertEquals( 1, sysSet.Count());
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: SysListTest выгружен
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #SysListTest
+    PROPERTIES
+      Name                #SysListTest
+      Extends             #SysTestCase
+      RunOn               #Called from
+    ENDPROPERTIES
+    
+    METHODS
+      Version: 3
+      SOURCE #classDeclaration
+        #class SysListTest extends SysTestCase
+        #{
+        #    SysList     sysList;
+        #}
+      ENDSOURCE
+      SOURCE #constructList
+        #protected void constructList( List _list)
+        #{
+        #;
+        #    sysList  = SysList::constructList( _list);
+        #}
+      ENDSOURCE
+      SOURCE #constructType
+        #protected void constructType( Types _type)
+        #{
+        #;
+        #    sysList  = SysList::constructType( _type);
+        #}
+      ENDSOURCE
+      SOURCE #testAdd
+        #void testAdd()
+        #{
+        #;
+        #    this.constructType(Types::Integer);
+        #    sysList.Add(10);
+        #    this.assertEquals( 1, sysList.Count());
+        #    sysList.Add(20);
+        #    this.assertEquals( 2, sysList.Count());
+        #}
+      ENDSOURCE
+      SOURCE #testConstructList
+        #void testConstructList()
+        #{
+        #;
+        #    this.constructList( new List(Types::String));
+        #    this.assertNotNull(sysList);
+        #}
+      ENDSOURCE
+      SOURCE #testConstructType
+        #void testConstructType()
+        #{
+        #;
+        #    this.constructType( Types::String);
+        #    this.assertNotNull(sysList);
+        #}
+      ENDSOURCE
+      SOURCE #testContains
+        #void testContains()
+        #{
+        #;
+        #    this.constructType(Types::Integer);
+        #    sysList.Add(10);
+        #    sysList.Add(20);
+        #
+        #    this.assertTrue( sysList.Contains(20));
+        #    this.assertFalse( sysList.Contains(30));
+        #}
+      ENDSOURCE
+      SOURCE #testCount
+        #void testCount()
+        #{
+        #    List    list = new List(Types::Integer);
+        #;
+        #    this.constructList( list);
+        #    this.assertEquals( 0, sysList.Count());
+        #
+        #    list.addEnd(10);
+        #    this.assertEquals( 1, sysList.Count());
+        #}
+      ENDSOURCE
+      SOURCE #testExcept
+        #void testExcept()
+        #{
+        #;
+        #    sysList  = SysList::constructType(Types::String)
+        #        .Add("01")
+        #        .Add("02")
+        #        .Add("03")
+        #        .Add("04")
+        #        .Add("05")
+        #        .Except( SysList::constructType(Types::String)
+        #            .Add("02")
+        #            .Add("03")
+        #        )
+        #    ;
+        #    this.assertNotNull(sysList);
+        #    this.assertEquals( 3, sysList.Count());
+        #}
+      ENDSOURCE
+      SOURCE #testGetEnumerator
+        #void testGetEnumerator()
+        #{
+        #    Enumerator  enumerator;
+        #    int         i;
+        #;
+        #    this.constructType(Types::Integer);
+        #    sysList.Add(10);
+        #    sysList.Add(20);
+        #
+        #    enumerator  = sysList.GetEnumerator();
+        #    this.assertNotNull( enumerator);
+        #
+        #    while (enumerator.moveNext())
+        #    {
+        #        i++;
+        #    }
+        #    this.assertEquals( 2, i);
+        #}
+      ENDSOURCE
+      SOURCE #testRemove
+        #void testRemove()
+        #{
+        #;
+        #    this.constructType( Types::Integer);
+        #    sysList.Add(10);
+        #    this.assertEquals( 1, sysList.Count());
+        #    sysList.Add(20);
+        #    this.assertEquals( 2, sysList.Count());
+        #    sysList.Remove(30);
+        #    this.assertEquals( 2, sysList.Count());
+        #    sysList.Remove(20);
+        #    this.assertEquals( 1, sysList.Count());
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: SysListCLRTest выгружен
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #SysListCLRTest
+    PROPERTIES
+      Name                #SysListCLRTest
+      Extends             #SysTestCase
+      RunOn               #Called from
+    ENDPROPERTIES
+    
+    METHODS
+      Version: 3
+      SOURCE #classDeclaration
+        #class SysListCLRTest extends SysTestCase
+        #{
+        #    SysListCLR     sysList;
+        #}
+      ENDSOURCE
+      SOURCE #constructTypeName
+        #protected void constructTypeName( str _typeName)
+        #{
+        #;
+        #    sysList  = SysListCLR::constructTypeName( _typeName);
+        #}
+      ENDSOURCE
+      SOURCE #testAdd
+        #void testAdd()
+        #{
+        #;
+        #    this.constructTypeName("System.Int32");
+        #    sysList.Add(10);
+        #    this.assertEquals( 1, sysList.Count());
+        #    sysList.Add(20);
+        #    this.assertEquals( 2, sysList.Count());
+        #}
+      ENDSOURCE
+      SOURCE #testConstructType
+        #void testConstructType()
+        #{
+        #;
+        #    this.constructTypeName( "System.String");
+        #    this.assertNotNull(sysList);
+        #}
+      ENDSOURCE
+      SOURCE #testContains
+        #void testContains()
+        #{
+        #;
+        #    this.constructTypeName("System.Int32");
+        #    sysList.Add(10);
+        #    sysList.Add(20);
+        #
+        #    this.assertTrue( sysList.Contains(20));
+        #    this.assertFalse( sysList.Contains(30));
+        #}
+      ENDSOURCE
+      SOURCE #testCount
+        #void testCount()
+        #{
+        #;
+        #    this.constructTypeName("System.Int32");
+        #    this.assertEquals( 0, sysList.Count());
+        #
+        #    sysList.Add(10);
+        #    this.assertEquals( 1, sysList.Count());
+        #}
+      ENDSOURCE
+      SOURCE #testExcept
+        #void testExcept()
+        #{
+        #;
+        #    sysList  = SysListCLR::constructTypeName("System.String")
+        #        .Add("01")
+        #        .Add("02")
+        #        .Add("03")
+        #        .Add("04")
+        #        .Add("05")
+        #        .Except( SysListCLR::constructTypeName("System.String")
+        #            .Add("02")
+        #            .Add("03")
+        #        )
+        #    ;
+        #    this.assertNotNull(sysList);
+        #    this.assertEquals( 3, sysList.Count());
+        #}
+      ENDSOURCE
+      SOURCE #testGetEnumerator
+        #void testGetEnumerator()
+        #{
+        #    Enumerator  enumerator;
+        #    int         i;
+        #;
+        #    this.constructTypeName("System.Int32");
+        #    sysList.Add(10);
+        #    sysList.Add(20);
+        #
+        #    enumerator  = sysList.GetEnumerator();
+        #    this.assertNotNull( enumerator);
+        #
+        #    while (enumerator.moveNext())
+        #    {
+        #        i++;
+        #    }
+        #    this.assertEquals( 2, i);
+        #}
+      ENDSOURCE
+      SOURCE #testItemTypeName
+        #void testItemTypeName()
+        #{
+        #    str     itemTypeName = "System.Int32";
+        #;
+        #    this.constructTypeName( itemTypeName);
+        #    this.assertEquals( itemTypeName, sysList.itemTypeName());
+        #}
+      ENDSOURCE
+      SOURCE #testRemove
+        #void testRemove()
+        #{
+        #;
+        #    this.constructTypeName("System.Int32");
+        #    sysList.Add(10);
+        #    this.assertEquals( 1, sysList.Count());
+        #    sysList.Add(20);
+        #    this.assertEquals( 2, sysList.Count());
+        #    sysList.Remove(30);
+        #    this.assertEquals( 2, sysList.Count());
+        #    sysList.Remove(20);
+        #    this.assertEquals( 1, sysList.Count());
         #}
       ENDSOURCE
     ENDMETHODS
@@ -637,6 +1431,37 @@ Formatversion: 1
         UTILOBJECTID 41880
         NODETYPE 329
         NAME #SysListCLR
+      ENDNODE
+      ENDGROUP
+      
+    GROUP #Test
+      PROPERTIES
+        Name                #Test
+        ProjectGroupType    #Classes
+        GroupMask           #
+        PreventEditProperties #No
+      ENDPROPERTIES
+      
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 45
+        UTILOBJECTID 41889
+        NODETYPE 329
+        NAME #SysSetTest
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 45
+        UTILOBJECTID 41888
+        NODETYPE 329
+        NAME #SysListTest
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 45
+        UTILOBJECTID 41890
+        NODETYPE 329
+        NAME #SysListCLRTest
       ENDNODE
       ENDGROUP
       

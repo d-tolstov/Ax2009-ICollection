@@ -4,8 +4,10 @@
 
 Реализовать методы :
 * `Add(anytype item)`
+* `Remove(anytype item)`
 * `Count`
 * `Contains(anytype item)`
+* `Except(ICollection collection)`
 
 Отнаследовать от :
 * `Enumerable`
