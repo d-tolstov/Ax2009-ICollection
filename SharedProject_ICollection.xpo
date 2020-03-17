@@ -17,6 +17,18 @@ Formatversion: 1
     METHODS
       Version: 3
       SOURCE #Add
+        #/// <summary>
+        #/// Добавить указанный элемент в список
+        #/// </summary>
+        #/// <param name="item">
+        #///
+        #/// </param>
+        #/// <returns>
+        #///
+        #/// </returns>
+        #/// <remarks>
+        #///
+        #/// </remarks>
         #ICollection Add( anytype item)
         #{
         #}
@@ -33,23 +45,102 @@ Formatversion: 1
         #{
         #}
       ENDSOURCE
+      SOURCE #Concat
+        #/// <summary>
+        #/// Создание нового списка путём объединения значений текущего и указанного списка
+        #/// </summary>
+        #/// <param name="_collection">
+        #///
+        #/// </param>
+        #/// <returns>
+        #///
+        #/// </returns>
+        #/// <remarks>
+        #///
+        #/// </remarks>
+        #ICollection Concat(ICollection _collection)
+        #{
+        #}
+      ENDSOURCE
       SOURCE #Contains
+        #/// <summary>
+        #/// Содержит ли список указанный элемент
+        #/// </summary>
+        #/// <param name="item">
+        #///
+        #/// </param>
+        #/// <returns>
+        #///
+        #/// </returns>
+        #/// <remarks>
+        #///
+        #/// </remarks>
         #boolean Contains( anytype item)
         #{
         #}
       ENDSOURCE
       SOURCE #Count
+        #/// <summary>
+        #/// Количество элементов
+        #/// </summary>
+        #/// <returns>
+        #///
+        #/// </returns>
+        #/// <remarks>
+        #///
+        #/// </remarks>
         #int Count()
         #{
         #}
       ENDSOURCE
       SOURCE #Except
+        #/// <summary>
+        #/// Создание нового списка уникальных значений на основе текущего, за исключением значений из указанного списка
+        #/// </summary>
+        #/// <param name="_collection">
+        #///
+        #/// </param>
+        #/// <returns>
+        #///
+        #/// </returns>
+        #/// <remarks>
+        #///
+        #/// </remarks>
         #ICollection Except(ICollection _collection)
         #{
         #}
       ENDSOURCE
       SOURCE #Remove
+        #/// <summary>
+        #/// Удаление одного указанного значения из списка
+        #/// </summary>
+        #/// <param name="item">
+        #///
+        #/// </param>
+        #/// <returns>
+        #///
+        #/// </returns>
+        #/// <remarks>
+        #///
+        #/// </remarks>
         #ICollection Remove( anytype item)
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #Union
+        #/// <summary>
+        #/// Создание нового списка путём объединения уникальных значений текущего и указанного списка
+        #/// </summary>
+        #/// <param name="_collection">
+        #///
+        #/// </param>
+        #/// <returns>
+        #///
+        #/// </returns>
+        #/// <remarks>
+        #///
+        #/// </remarks>
+        #ICollection Union(ICollection _collection)
         #{
         #}
       ENDSOURCE
@@ -96,6 +187,13 @@ Formatversion: 1
         #class SysSet implements ICollection
         #{
         #    Set     set;
+        #}
+      ENDSOURCE
+      SOURCE #Concat
+        #SysSet Concat(SysSet _collection)
+        #{
+        #;
+        #    return this.Union( _collection);
         #}
       ENDSOURCE
       SOURCE #Contains
@@ -146,6 +244,13 @@ Formatversion: 1
         #Set set()
         #{
         #    return set;
+        #}
+      ENDSOURCE
+      SOURCE #Union
+        #SysSet Union(SysSet _collection)
+        #{
+        #;
+        #    return SysSet::constructSet( Set::union( this.set(), _collection.set()));
         #}
       ENDSOURCE
       SOURCE #constructSet
@@ -204,6 +309,13 @@ Formatversion: 1
         #class SysList implements ICollection
         #{
         #    List    list;
+        #}
+      ENDSOURCE
+      SOURCE #Concat
+        #SysList Concat(SysList _collection)
+        #{
+        #;
+        #    return SysList::constructList( List::merge( this.list(), _collection.list()));
         #}
       ENDSOURCE
       SOURCE #Contains
@@ -286,6 +398,32 @@ Formatversion: 1
         #    }
         #
         #    return this;
+        #}
+      ENDSOURCE
+      SOURCE #Union
+        #SysList Union(SysList _collection)
+        #{
+        #    Enumerator  enumerator;
+        #    Set         s   = new Set(this.list().typeId());
+        #    List        ret = new List(this.list().typeId());
+        #;
+        #    enumerator  = this.list().getEnumerator();
+        #    while (enumerator.moveNext())
+        #    {
+        #        s.add( enumerator.current());
+        #    }
+        #    enumerator  = _collection.list().getEnumerator();
+        #    while (enumerator.moveNext())
+        #    {
+        #        s.add( enumerator.current());
+        #    }
+        #    enumerator  = s.getEnumerator();
+        #    while (enumerator.moveNext())
+        #    {
+        #        ret.addEnd( enumerator.current());
+        #    }
+        #
+        #    return SysList::constructList( ret);
         #}
       ENDSOURCE
       SOURCE #constructList
@@ -380,6 +518,32 @@ Formatversion: 1
         #    return collectionTypeName;
         #}
       ENDSOURCE
+      SOURCE #Concat
+        #SysICollectionCLR Concat(SysICollectionCLR _collection)
+        #{
+        #    SysICollectionCLR   ret;
+        #    System.Object       unionResult;
+        #;
+        #    unionResult    = this.invokeGenericStatic(
+        #        SysICollectionCLR::SystemLinqEnumerableType()
+        #      , "Concat"
+        #      , this.itemType()
+        #      , this.params( this.collection(), _collection.collection())
+        #      , true
+        #    );
+        #
+        #    ret = SysICollectionCLR::constructCollection(
+        #        this.invokeGenericStatic(
+        #            SysICollectionCLR::SystemLinqEnumerableType()
+        #          , "ToList"
+        #          , this.itemType()
+        #          , this.params( unionResult)
+        #        )
+        #    );
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
       SOURCE #Contains
         #boolean Contains(anytype item)
         #{
@@ -413,19 +577,24 @@ Formatversion: 1
         #{
         #    SysICollectionCLR   ret;
         #    Enumerator          enumerator;
+        #    System.Object       exceptResult;
         #;
-        #    ret = SysICollectionCLR::constructCollectionTypeName( _collection.collectionTypeName());
+        #    exceptResult    = this.invokeGenericStatic(
+        #        SysICollectionCLR::SystemLinqEnumerableType()
+        #      , "Except"
+        #      , this.itemType()
+        #      , this.params( this.collection(), _collection.collection())
+        #      , true
+        #    );
         #
-        #    // Так как в Ax2009 не удалось использовать класс Enumerable из System.Linq
-        #    // приходится извращаться с Enumerator чтобы симитировать функцию Except
-        #    enumerator  = this.GetEnumerator();
-        #    while (enumerator.moveNext())
-        #    {
-        #        if ( !_collection.Contains(enumerator.current()))
-        #        {
-        #            ret.Add( enumerator.current());
-        #        }
-        #    }
+        #    ret = SysICollectionCLR::constructCollection(
+        #        this.invokeGenericStatic(
+        #            SysICollectionCLR::SystemLinqEnumerableType()
+        #          , "ToList"
+        #          , this.itemType()
+        #          , this.params( exceptResult)
+        #        )
+        #    );
         #
         #    return ret;
         #}
@@ -734,7 +903,6 @@ Formatversion: 1
         #                {
         #                    methodInfo          = methods.GetValue(i-1);
         #                    genericMethodName   = methodInfo.get_Name();
-        #                    info( genericMethodName);
         #
         #                    if (genericMethodName == _methodName)
         #                    {
@@ -802,6 +970,157 @@ Formatversion: 1
         #    return ret;
         #}
       ENDSOURCE
+      SOURCE #invokeGenericStatic
+        #/// <summary>
+        #/// Invokes generic static method
+        #/// </summary>
+        #/// <param name="_classType">
+        #/// Object type which method should be invoked
+        #/// </param>
+        #/// <param name="_methodName">
+        #/// Name of method
+        #/// </param>
+        #/// <param name="_type">
+        #/// Required type
+        #/// </param>
+        #/// <param name="_parameters">
+        #/// array of parameters for execution
+        #/// </param>
+        #/// <param name="_overloaded">
+        #/// Is method overloaded
+        #/// </param>
+        #/// <returns>
+        #/// Return value of invoked method
+        #/// </returns>
+        #/// <exception cref="Exception::Error">
+        #/// If error occur when executing method
+        #/// </exception>
+        #protected System.Object invokeGenericStatic(
+        #    System.Type        _classType
+        #  , str                _methodName
+        #  , System.Type        _type
+        #  , Array              _parameters
+        #  , boolean            _overloaded = false
+        #)
+        #{
+        #    System.Type                  parameterType;
+        #    int                          i = _parameters.lastIndex();
+        #    //BP deviation documented
+        #    System.Type[]                parameterTypes = new System.Type[i]();
+        #    //BP deviation documented
+        #    System.Type[]                methodType     = new System.Type[1]();
+        #    //BP deviation documented
+        #    System.Object[]              parameters     = new System.Object[i]();
+        #    System.Object                parameter;
+        #
+        #    System.Reflection.MethodInfo methodInfo;
+        #    System.Object                ret;
+        #
+        #    System.Exception             e;
+        #
+        #    System.Reflection.MethodInfo[]      methods;
+        #    int                                 methodsQty, genericMethodParametersQty, j;
+        #    str                                 genericMethodName;
+        #    System.Reflection.ParameterInfo[]   genericMethodParameters;
+        #    System.Reflection.ParameterInfo     genericMethodParameterInfo;
+        #    System.Type                         genericMethodParameterType;
+        #    System.Reflection.MethodInfo        genericMethodInfo;
+        #    boolean                             parametersEqual;
+        #
+        #    try
+        #    {
+        #        for (i = 1; i <= _parameters.lastIndex(); i++)
+        #        {
+        #            parameter = _parameters.value(i);
+        #            parameterType = parameter.GetType();
+        #            parameterTypes.SetValue(parameterType, i - 1);
+        #            parameters.SetValue(parameter, i - 1);
+        #        }
+        #
+        #        methodType.SetValue(_type, 0);
+        #
+        #        if (_overloaded)
+        #        {
+        #            methodInfo = _classType.GetMethod(_methodName, parameterTypes); //Gets overload with parameters specified
+        #
+        #            if (! methodInfo)
+        #            {
+        #                methods     = _classType.GetMethods();
+        #                methodsQty  = methods.get_Length();
+        #
+        #                for (i = 1; i <= methodsQty; i++)
+        #                {
+        #                    methodInfo          = methods.GetValue(i-1);
+        #                    genericMethodName   = methodInfo.get_Name();
+        #
+        #                    if (genericMethodName == _methodName)
+        #                    {
+        #                        genericMethodInfo           = methodInfo.MakeGenericMethod(methodType);
+        #                        genericMethodParameters     = genericMethodInfo.GetParameters();
+        #                        genericMethodParametersQty  = genericMethodParameters.get_Length();
+        #
+        #                        if (genericMethodParametersQty == _parameters.lastIndex())
+        #                        {
+        #                            parametersEqual = true;
+        #
+        #                            for (j = 1; j <= genericMethodParametersQty; j++)
+        #                            {
+        #                                genericMethodParameterInfo  = genericMethodParameters.GetValue(j-1);
+        #                                genericMethodParameterType  = genericMethodParameterInfo.get_ParameterType();
+        #                                parameter                   = _parameters.value(j);
+        #                                parameterType               = parameter.GetType();
+        #
+        #                                if ( !genericMethodParameterType.Equals(parameterType)
+        #                                  && !CLRInterop::getAnyTypeForObject(genericMethodParameterType.IsAssignableFrom(parameterType)))
+        #                                {
+        #                                    parametersEqual = false;
+        #                                }
+        #                            }
+        #
+        #                            if (parametersEqual)
+        #                            {
+        #                                break;
+        #                            }
+        #                            else
+        #                            {
+        #                                methodInfo = null;
+        #                            }
+        #                        }
+        #                    }
+        #                    else
+        #                    {
+        #                        methodInfo = null;
+        #                    }
+        #                }
+        #            }
+        #        }
+        #        else
+        #        {
+        #            methodInfo = _classType.GetMethod(_methodName);
+        #        }
+        #
+        #        if ( CLRInterop::isNull(methodInfo))
+        #            throw Error( strfmt("Метод %1<%2> в классе %3 не найден!"
+        #                       , _methodName
+        #                       , CLRInterop::getAnyTypeForObject(_type.ToString())
+        #                       , CLRInterop::getAnyTypeForObject(_classType.ToString()))
+        #                       );
+        #
+        #        if ( methodInfo.get_IsGenericMethod())
+        #            methodInfo = methodInfo.MakeGenericMethod(methodType);         //Gets generic method of specified type(s)
+        #
+        #        ret = methodInfo.Invoke( null, parameters);
+        #    }
+        #    catch (Exception::CLRError)
+        #    {
+        #        //BP deviation documented
+        #        e = CLRInterop::getLastException();
+        #        throw error(e.ToString());
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
       SOURCE #itemType
         #System.Type itemType()
         #{
@@ -838,7 +1157,7 @@ Formatversion: 1
       ENDSOURCE
       SOURCE #params
         #protected Array params(
-        #    System.Object _parameter1
+        #    System.Object _parameter1 = null
         #  , System.Object _parameter2 = null
         #  , System.Object _parameter3 = null
         #)
@@ -846,7 +1165,10 @@ Formatversion: 1
         #    Array   params;
         #;
         #    params  = new Array(Types::Class);
-        #    params.value( 1, _parameter1);
+        #    if ( !prmisdefault(_parameter1))
+        #    {
+        #        params.value( 1, _parameter1);
+        #    }
         #    if ( !prmisdefault(_parameter2))
         #    {
         #        params.value( 2, _parameter2);
@@ -866,6 +1188,32 @@ Formatversion: 1
         #    this.invoke( collection, "Remove", this.params( this.getObjectForAnyType(item)));
         #
         #    return this;
+        #}
+      ENDSOURCE
+      SOURCE #Union
+        #SysICollectionCLR Union(SysICollectionCLR _collection)
+        #{
+        #    SysICollectionCLR   ret;
+        #    System.Object       unionResult;
+        #;
+        #    unionResult    = this.invokeGenericStatic(
+        #        SysICollectionCLR::SystemLinqEnumerableType()
+        #      , "Union"
+        #      , this.itemType()
+        #      , this.params( this.collection(), _collection.collection())
+        #      , true
+        #    );
+        #
+        #    ret = SysICollectionCLR::constructCollection(
+        #        this.invokeGenericStatic(
+        #            SysICollectionCLR::SystemLinqEnumerableType()
+        #          , "ToList"
+        #          , this.itemType()
+        #          , this.params( unionResult)
+        #        )
+        #    );
+        #
+        #    return ret;
         #}
       ENDSOURCE
       SOURCE #constructCollection
@@ -888,6 +1236,12 @@ Formatversion: 1
         #    collection        = System.Activator::CreateInstance( collectionType);
         #
         #    return SysICollectionCLR::constructCollection( collection);
+        #}
+      ENDSOURCE
+      SOURCE #SystemLinqEnumerableType
+        #static System.Type SystemLinqEnumerableType()
+        #{
+        #    return SysCLRType::newFromTypeName("System.Linq.Enumerable, System.Linq, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a").parmClrType();
         #}
       ENDSOURCE
     ENDMETHODS
@@ -970,6 +1324,26 @@ Formatversion: 1
     
     METHODS
       Version: 3
+      SOURCE #testConcat
+        #void testConcat()
+        #{
+        #;
+        #    sysSet  = SysSet::constructType(Types::String)
+        #        .Add("01")
+        #        .Add("02")
+        #        .Add("03")
+        #        .Add("04")
+        #        .Add("05")
+        #        .Concat( SysSet::constructType(Types::String)
+        #            .Add("02")
+        #            .Add("03")
+        #            .Add("06")
+        #        )
+        #    ;
+        #    this.assertNotNull(sysSet);
+        #    this.assertEquals( 6, sysSet.Count());
+        #}
+      ENDSOURCE
       SOURCE #classDeclaration
         #class SysSetTest extends SysTestCase
         #{
@@ -1094,6 +1468,26 @@ Formatversion: 1
         #    this.assertEquals( 1, sysSet.Count());
         #}
       ENDSOURCE
+      SOURCE #testUnion
+        #void testUnion()
+        #{
+        #;
+        #    sysSet  = SysSet::constructType(Types::String)
+        #        .Add("01")
+        #        .Add("02")
+        #        .Add("03")
+        #        .Add("04")
+        #        .Add("05")
+        #        .Union( SysSet::constructType(Types::String)
+        #            .Add("02")
+        #            .Add("03")
+        #            .Add("06")
+        #        )
+        #    ;
+        #    this.assertNotNull(sysSet);
+        #    this.assertEquals( 6, sysSet.Count());
+        #}
+      ENDSOURCE
     ENDMETHODS
   ENDCLASS
 
@@ -1112,6 +1506,48 @@ Formatversion: 1
     
     METHODS
       Version: 3
+      SOURCE #testConcat
+        #void testConcat()
+        #{
+        #;
+        #    sysList  = SysList::constructType(Types::String)
+        #        .Add("01")
+        #        .Add("02")
+        #        .Add("03")
+        #        .Add("04")
+        #        .Add("04")
+        #        .Add("05")
+        #        .Concat( SysList::constructType(Types::String)
+        #            .Add("02")
+        #            .Add("03")
+        #            .Add("06")
+        #        )
+        #    ;
+        #    this.assertNotNull(sysList);
+        #    this.assertEquals( 9, sysList.Count());
+        #}
+      ENDSOURCE
+      SOURCE #testUnion
+        #void testUnion()
+        #{
+        #;
+        #    sysList  = SysList::constructType(Types::String)
+        #        .Add("01")
+        #        .Add("02")
+        #        .Add("03")
+        #        .Add("04")
+        #        .Add("04")
+        #        .Add("05")
+        #        .Union( SysList::constructType(Types::String)
+        #            .Add("02")
+        #            .Add("03")
+        #            .Add("06")
+        #        )
+        #    ;
+        #    this.assertNotNull(sysList);
+        #    this.assertEquals( 6, sysList.Count());
+        #}
+      ENDSOURCE
       SOURCE #classDeclaration
         #class SysListTest extends SysTestCase
         #{
@@ -1279,6 +1715,28 @@ Formatversion: 1
         #    this.assertEquals( 2, sysList.Count());
         #}
       ENDSOURCE
+      SOURCE #testConcat
+        #void testConcat()
+        #{
+        #;
+        #    sysList  = SysListCLR::constructTypeName("System.String")
+        #        .Add("01")
+        #        .Add("02")
+        #        .Add("02")
+        #        .Add("03")
+        #        .Add("04")
+        #        .Add("03")
+        #        .Add("05")
+        #        .Concat( SysListCLR::constructTypeName("System.String")
+        #            .Add("02")
+        #            .Add("03")
+        #            .Add("06")
+        #        )
+        #    ;
+        #    this.assertNotNull(sysList);
+        #    this.assertEquals( 10, sysList.Count());
+        #}
+      ENDSOURCE
       SOURCE #testConstructType
         #void testConstructType()
         #{
@@ -1316,6 +1774,7 @@ Formatversion: 1
         #;
         #    sysList  = SysListCLR::constructTypeName("System.String")
         #        .Add("01")
+        #        .Add("02")
         #        .Add("02")
         #        .Add("03")
         #        .Add("04")
@@ -1366,11 +1825,34 @@ Formatversion: 1
         #    sysList.Add(10);
         #    this.assertEquals( 1, sysList.Count());
         #    sysList.Add(20);
-        #    this.assertEquals( 2, sysList.Count());
+        #    sysList.Add(20);
+        #    this.assertEquals( 3, sysList.Count());
         #    sysList.Remove(30);
-        #    this.assertEquals( 2, sysList.Count());
+        #    this.assertEquals( 3, sysList.Count());
         #    sysList.Remove(20);
-        #    this.assertEquals( 1, sysList.Count());
+        #    this.assertEquals( 2, sysList.Count());
+        #}
+      ENDSOURCE
+      SOURCE #testUnion
+        #void testUnion()
+        #{
+        #;
+        #    sysList  = SysListCLR::constructTypeName("System.String")
+        #        .Add("01")
+        #        .Add("02")
+        #        .Add("02")
+        #        .Add("03")
+        #        .Add("04")
+        #        .Add("03")
+        #        .Add("05")
+        #        .Union( SysListCLR::constructTypeName("System.String")
+        #            .Add("02")
+        #            .Add("03")
+        #            .Add("06")
+        #        )
+        #    ;
+        #    this.assertNotNull(sysList);
+        #    this.assertEquals( 6, sysList.Count());
         #}
       ENDSOURCE
     ENDMETHODS
