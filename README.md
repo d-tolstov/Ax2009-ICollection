@@ -8,6 +8,8 @@
 * `Count`
 * `Contains(anytype item)`
 * `Except(ICollection collection)`
+* `Union(ICollection collection)`
+* `Concat(ICollection collection)`
 
 Отнаследовать от :
 * `Enumerable`

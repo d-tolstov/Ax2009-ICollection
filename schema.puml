@@ -10,6 +10,8 @@ interface ICollection{
     Count() : int
     Contains(anytype item) : boolean
     Except(ICollection collection) : ICollection
+    Union(ICollection collection) : ICollection
+    Concat(ICollection collection) : ICollection
 }
 Enumerable <|-- ICollection
 
@@ -18,6 +20,8 @@ class SysSet{
     Add(anytype item) : SysSet
     Remove(anytype item) : SysSet
     Except(SysSet collection) : SysSet
+    Union(SysSet collection) : SysSet
+    Concat(SysSet collection) : SysSet
 }
 ICollection <|.. SysSet
 
@@ -34,6 +38,8 @@ class SysList{
     Add(anytype item) : SysList
     Remove(anytype item) : SysList
     Except(SysList collection) : SysList
+    Union(SysList collection) : SysList
+    Concat(SysList collection) : SysList
 }
 ICollection <|.. SysList
 
@@ -55,6 +61,8 @@ class SysICollectionCLR{
     Add(anytype item) : SysICollectionCLR
     Remove(anytype item) : SysICollectionCLR
     Except(SysICollectionCLR collection) : SysICollectionCLR
+    Union(SysICollectionCLR collection) : SysICollectionCLR
+    Concat(SysICollectionCLR collection) : SysICollectionCLR
 }
 ICollection <|.. SysICollectionCLR
 
