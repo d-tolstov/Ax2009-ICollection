@@ -110,6 +110,34 @@ Formatversion: 1
         #{
         #}
       ENDSOURCE
+      SOURCE #Max
+        #/// <summary>
+        #/// Максимальное значение в коллекции (для числовых коллекций)
+        #/// </summary>
+        #/// <returns>
+        #///
+        #/// </returns>
+        #/// <remarks>
+        #///
+        #/// </remarks>
+        #real Max()
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #Min
+        #/// <summary>
+        #/// Минимальное значение в коллекции (для числовых коллекций)
+        #/// </summary>
+        #/// <returns>
+        #///
+        #/// </returns>
+        #/// <remarks>
+        #///
+        #/// </remarks>
+        #real Min()
+        #{
+        #}
+      ENDSOURCE
       SOURCE #Remove
         #/// <summary>
         #/// Удаление одного указанного значения из списка
@@ -142,6 +170,72 @@ Formatversion: 1
         #/// </remarks>
         #ICollection Union(ICollection _collection)
         #{
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: ICollectionStatic выгружен
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #ICollectionStatic
+    PROPERTIES
+      Name                #ICollectionStatic
+      Extends             #
+      RunOn               #Called from
+    ENDPROPERTIES
+    
+    METHODS
+      Version: 3
+      SOURCE #classDeclaration
+        #/// <summary>
+        #/// Класс для хранения статических функций, общих для семейства ICollection
+        #/// </summary>
+        #/// <remarks>
+        #///
+        #/// </remarks>
+        #class ICollectionStatic
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #construct
+        #static ICollection construct( anytype source)
+        #{
+        #    Types           sourceType = typeof(source);
+        #    ClassId         sourceClassId;
+        #    SysDictClass    dc;
+        #    ICollection     ret;
+        #;
+        #    switch (sourceType)
+        #    {
+        #        case Types::Class:
+        #            sourceClassId   = classidget(source);
+        #            dc              = new SysDictClass(sourceClassId);
+        #            if ( dc.isImplementing(classnum(ICollection)))
+        #            {
+        #                ret = source;
+        #            }
+        #            else
+        #            switch (sourceClassId)
+        #            {
+        #                case classnum(Set):
+        #                    ret = SysSet::constructSet(source);
+        #                    break;
+        #                case classnum(List):
+        #                    ret = SysList::constructList(source);
+        #                    break;
+        #                default:
+        #                    throw Error(strfmt("Класс \"%1\" не поддерживается в функции %2", ClassId2Name(sourceClassId), funcname()));
+        #            }
+        #            break;
+        #        default:
+        #            throw Error(Error::unsupportedEnumValue(funcname(), sourceType));
+        #    }
+        #
+        #    return ret;
         #}
       ENDSOURCE
     ENDMETHODS
@@ -219,6 +313,46 @@ Formatversion: 1
         #SetEnumerator GetEnumerator()
         #{
         #    return set.getEnumerator();
+        #}
+      ENDSOURCE
+      SOURCE #json
+        #str json()
+        #{
+        #    return SysJSONConvert::construct().SerializeObject( this.set());
+        #}
+      ENDSOURCE
+      SOURCE #Max
+        #real Max()
+        #{
+        #    real        ret;
+        #    Enumerator  enumerator;
+        #;
+        #    if ( !this.set().elements())
+        #        throw Error("Коллекция не содержит элементов!");
+        #
+        #    enumerator  = this.GetEnumerator();
+        #    while ( enumerator.moveNext())
+        #    {
+        #        ret = enumerator.current();
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #Min
+        #real Min()
+        #{
+        #    real        ret;
+        #    Enumerator  enumerator;
+        #;
+        #    if ( !this.set().elements())
+        #        throw Error("Коллекция не содержит элементов!");
+        #
+        #    enumerator  = this.GetEnumerator();
+        #    if ( enumerator.moveNext())
+        #        ret = enumerator.current();
+        #
+        #    return ret;
         #}
       ENDSOURCE
       SOURCE #new
@@ -364,10 +498,66 @@ Formatversion: 1
         #    return list.getEnumerator();
         #}
       ENDSOURCE
+      SOURCE #json
+        #str json()
+        #{
+        #    return SysJSONConvert::construct().SerializeObject( this.list());
+        #}
+      ENDSOURCE
       SOURCE #list
         #List list()
         #{
         #    return list;
+        #}
+      ENDSOURCE
+      SOURCE #Max
+        #real Max()
+        #{
+        #    real        ret;
+        #    Enumerator  enumerator;
+        #    boolean     firstRecord = true;
+        #;
+        #    if ( !this.list().elements())
+        #        throw Error("Коллекция не содержит элементов!");
+        #
+        #    enumerator  = this.GetEnumerator();
+        #    while ( enumerator.moveNext())
+        #    {
+        #        if ( firstRecord)
+        #        {
+        #            firstRecord = false;
+        #            ret = enumerator.current();
+        #        }
+        #        else
+        #            ret = max(enumerator.current(),ret);
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #Min
+        #real Min()
+        #{
+        #    real        ret;
+        #    Enumerator  enumerator;
+        #    boolean     firstRecord = true;
+        #;
+        #    if ( !this.list().elements())
+        #        throw Error("Коллекция не содержит элементов!");
+        #
+        #    enumerator  = this.GetEnumerator();
+        #    while ( enumerator.moveNext())
+        #    {
+        #        if ( firstRecord)
+        #        {
+        #            firstRecord = false;
+        #            ret = enumerator.current();
+        #        }
+        #        else
+        #            ret = min(enumerator.current(),ret);
+        #    }
+        #
+        #    return ret;
         #}
       ENDSOURCE
       SOURCE #new
@@ -433,7 +623,7 @@ Formatversion: 1
         #}
       ENDSOURCE
       SOURCE #constructType
-        #static SysList constructType(Types _type)
+        #static SysList constructType(Types _type = Types::AnyType)
         #{
         #    return SysList::constructList( new List(_type));
         #}
@@ -460,7 +650,11 @@ Formatversion: 1
         #SysICollectionCLR Add(anytype item)
         #{
         #;
-        #    this.invoke( collection, "Add", this.params( this.getObjectForAnyType(item)));
+        #    SysCLRReflection::invokeMethod(
+        #        collection
+        #      , "Add"
+        #      , SysCLRReflection::getArray( this.getObjectForAnyType(item))
+        #    );
         #
         #    return this;
         #}
@@ -524,20 +718,20 @@ Formatversion: 1
         #    SysICollectionCLR   ret;
         #    System.Object       unionResult;
         #;
-        #    unionResult    = this.invokeGenericStatic(
+        #    unionResult    = SysCLRReflection::invokeStaticGenericType(
         #        SysICollectionCLR::SystemLinqEnumerableType()
         #      , "Concat"
         #      , this.itemType()
-        #      , this.params( this.collection(), _collection.collection())
+        #      , SysCLRReflection::getArray( this.collection(), _collection.collection())
         #      , true
         #    );
         #
         #    ret = SysICollectionCLR::constructCollection(
-        #        this.invokeGenericStatic(
+        #        SysCLRReflection::invokeStaticGenericType(
         #            SysICollectionCLR::SystemLinqEnumerableType()
         #          , "ToList"
         #          , this.itemType()
-        #          , this.params( unionResult)
+        #          , SysCLRReflection::getArray( unionResult)
         #        )
         #    );
         #
@@ -567,7 +761,10 @@ Formatversion: 1
         #{
         #    int ret;
         #;
-        #    ret = this.invoke( collection, "Count");
+        #    ret = SysCLRReflection::getPropertyValue(
+        #        collection
+        #      , "Count"
+        #    );
         #
         #    return ret;
         #}
@@ -579,20 +776,20 @@ Formatversion: 1
         #    Enumerator          enumerator;
         #    System.Object       exceptResult;
         #;
-        #    exceptResult    = this.invokeGenericStatic(
+        #    exceptResult    = SysCLRReflection::invokeStaticGenericType(
         #        SysICollectionCLR::SystemLinqEnumerableType()
         #      , "Except"
         #      , this.itemType()
-        #      , this.params( this.collection(), _collection.collection())
+        #      , SysCLRReflection::getArray( this.collection(), _collection.collection())
         #      , true
         #    );
         #
         #    ret = SysICollectionCLR::constructCollection(
-        #        this.invokeGenericStatic(
+        #        SysCLRReflection::invokeStaticGenericType(
         #            SysICollectionCLR::SystemLinqEnumerableType()
         #          , "ToList"
         #          , this.itemType()
-        #          , this.params( exceptResult)
+        #          , SysCLRReflection::getArray( exceptResult)
         #        )
         #    );
         #
@@ -687,6 +884,13 @@ Formatversion: 1
         #        }
         #    }
         #    else
+        #    if ( typeof(item) == Types::Enum)
+        #    {
+        #        new InteropPermission(InteropKind::ClrInterop).assert();
+        #
+        #        clrObject   = CLRInterop::getObjectForAnyType( enum2int(item));
+        #    }
+        #    else
         #    {
         #        new InteropPermission(InteropKind::ClrInterop).assert();
         #
@@ -694,431 +898,6 @@ Formatversion: 1
         #    }
         #
         #    return clrObject;
-        #}
-      ENDSOURCE
-      SOURCE #invoke
-        #protected System.Object invoke(
-        #    System.Object      _class
-        #  , str                _methodName
-        #  , Array              _parameters  = new Array(Types::Class)
-        #  , boolean            _overloaded  = false
-        #)
-        #{
-        #    System.Type                         classType;
-        #    System.Type                         parameterType;
-        #    int                                 i = _parameters.lastIndex();
-        #    //BP deviation documented
-        #    System.Type[]                       parameterTypes;
-        #    //BP deviation documented
-        #    System.Object[]                     parameters;
-        #    System.Object                       parameter;
-        #
-        #    System.Reflection.MethodInfo        methodInfo;
-        #    System.Reflection.PropertyInfo      propertyInfo;
-        #    System.Object                       ret;
-        #
-        #    System.Exception                    e;
-        #
-        #    System.Reflection.MethodInfo[]      methods;
-        #    int                                 methodsQty, methodParametersQty, j;
-        #    str                                 methodName;
-        #    System.Reflection.ParameterInfo[]   methodParameters;
-        #    System.Reflection.ParameterInfo     methodParameterInfo;
-        #    System.Type                         methodParameterType;
-        #    boolean                             parametersEqual;
-        #
-        #    try
-        #    {
-        #        new InteropPermission(InteropKind::ClrInterop).assert();
-        #
-        #        classType       = _class.GetType();
-        #        parameterTypes  = new System.Type[i]();
-        #        parameters      = new System.Object[i]();
-        #
-        #        for (i = 1; i <= _parameters.lastIndex(); i++)
-        #        {
-        #            parameter = _parameters.value(i);
-        #            parameterType = parameter.GetType();
-        #            parameterTypes.SetValue(parameterType, i - 1);
-        #            parameters.SetValue(parameter, i - 1);
-        #        }
-        #
-        #        if (_overloaded)
-        #        {
-        #            methodInfo = classType.GetMethod(_methodName, parameterTypes); //Gets overload with parameters specified
-        #
-        #            if (! methodInfo)
-        #            {
-        #                methods     = classType.GetMethods();
-        #                methodsQty  = methods.get_Length();
-        #
-        #                for (i = 1; i <= methodsQty; i++)
-        #                {
-        #                    methodInfo          = methods.GetValue(i-1);
-        #                    methodName          = methodInfo.get_Name();
-        #
-        #                    if (methodName == _methodName)
-        #                    {
-        #                        methodParameters     = methodInfo.GetParameters();
-        #                        methodParametersQty  = methodParameters.get_Length();
-        #
-        #                        if (methodParametersQty == _parameters.lastIndex())
-        #                        {
-        #                            parametersEqual = true;
-        #
-        #                            for (j = 1; j <= methodParametersQty; j++)
-        #                            {
-        #                                methodParameterInfo  = methodParameters.GetValue(j-1);
-        #                                methodParameterType  = methodParameterInfo.get_ParameterType();
-        #                                parameter                   = _parameters.value(j);
-        #                                parameterType               = parameter.GetType();
-        #
-        #                                if (! methodParameterType.Equals(parameterType))
-        #                                {
-        #                                    parametersEqual = false;
-        #                                }
-        #                            }
-        #
-        #                            if (parametersEqual)
-        #                            {
-        #                                break;
-        #                            }
-        #                            else
-        #                            {
-        #                                methodInfo = null;
-        #                            }
-        #                        }
-        #                    }
-        #                }
-        #            }
-        #        }
-        #        else
-        #        {
-        #            methodInfo = classType.GetMethod(_methodName);
-        #        }
-        #
-        #        if ( !CLRInterop::isNull(methodInfo))
-        #        {
-        #            ret = methodInfo.Invoke( _class, parameters);
-        #        }
-        #        else
-        #        {
-        #            propertyInfo    = classType.GetProperty(_methodName);
-        #            if ( !CLRInterop::isNull(propertyInfo))
-        #            {
-        #                ret = propertyInfo.GetValue( _class);
-        #            }
-        #            else
-        #                throw Error(strfmt("Метод %1 в классе %2 не найден!", _methodName, CLRInterop::getAnyTypeForObject(classType.ToString())));
-        #        }
-        #    }
-        #    catch (Exception::CLRError)
-        #    {
-        #        throw error(AifUtil::getClrErrorMessage());
-        #    }
-        #
-        #    return ret;
-        #}
-      ENDSOURCE
-      SOURCE #invokeGeneric
-        #/// <summary>
-        #/// Invokes generic method
-        #/// </summary>
-        #/// <param name="_class">
-        #/// Object which method should be invoked
-        #/// </param>
-        #/// <param name="_methodName">
-        #/// Name of method
-        #/// </param>
-        #/// <param name="_type">
-        #/// Required type
-        #/// </param>
-        #/// <param name="_parameters">
-        #/// array of parameters for execution
-        #/// </param>
-        #/// <param name="_overloaded">
-        #/// Is method overloaded
-        #/// </param>
-        #/// <returns>
-        #/// Return value of invoked method
-        #/// </returns>
-        #/// <exception cref="Exception::Error">
-        #/// If error occur when executing method
-        #/// </exception>
-        #protected System.Object invokeGeneric(
-        #    System.Object   _class
-        #  , str             _methodName
-        #  , System.Type     _type
-        #  , Array           _parameters
-        #  , boolean         _overloaded = false
-        #)
-        #{
-        #    System.Type                  classType      = _class.GetType();
-        #    System.Type                  parameterType;
-        #    int                          i = _parameters.lastIndex();
-        #    //BP deviation documented
-        #    System.Type[]                parameterTypes = new System.Type[i]();
-        #    //BP deviation documented
-        #    System.Type[]                methodType     = new System.Type[1]();
-        #    //BP deviation documented
-        #    System.Object[]              parameters     = new System.Object[i]();
-        #    System.Object                parameter;
-        #
-        #    System.Reflection.MethodInfo methodInfo;
-        #    System.Object                ret;
-        #
-        #    System.Exception             e;
-        #
-        #    System.Reflection.MethodInfo[]      methods;
-        #    int                                 methodsQty, genericMethodParametersQty, j;
-        #    str                                 genericMethodName;
-        #    System.Reflection.ParameterInfo[]   genericMethodParameters;
-        #    System.Reflection.ParameterInfo     genericMethodParameterInfo;
-        #    System.Type                         genericMethodParameterType;
-        #    System.Reflection.MethodInfo        genericMethodInfo;
-        #    boolean                             parametersEqual;
-        #
-        #    try
-        #    {
-        #        for (i = 1; i <= _parameters.lastIndex(); i++)
-        #        {
-        #            parameter = _parameters.value(i);
-        #            parameterType = parameter.GetType();
-        #            parameterTypes.SetValue(parameterType, i - 1);
-        #            parameters.SetValue(parameter, i - 1);
-        #        }
-        #
-        #        methodType.SetValue(_type, 0);
-        #
-        #        if (_overloaded)
-        #        {
-        #            methodInfo = classType.GetMethod(_methodName, parameterTypes); //Gets overload with parameters specified
-        #
-        #            if (! methodInfo)
-        #            {
-        #                methods     = classType.GetMethods();
-        #                methodsQty  = methods.get_Length();
-        #
-        #                for (i = 1; i <= methodsQty; i++)
-        #                {
-        #                    methodInfo          = methods.GetValue(i-1);
-        #                    genericMethodName   = methodInfo.get_Name();
-        #
-        #                    if (genericMethodName == _methodName)
-        #                    {
-        #                        genericMethodInfo           = methodInfo.MakeGenericMethod(methodType);
-        #                        genericMethodParameters     = genericMethodInfo.GetParameters();
-        #                        genericMethodParametersQty  = genericMethodParameters.get_Length();
-        #
-        #                        if (genericMethodParametersQty == _parameters.lastIndex())
-        #                        {
-        #                            parametersEqual = true;
-        #
-        #                            for (j = 1; j <= genericMethodParametersQty; j++)
-        #                            {
-        #                                genericMethodParameterInfo  = genericMethodParameters.GetValue(j-1);
-        #                                genericMethodParameterType  = genericMethodParameterInfo.get_ParameterType();
-        #                                parameter                   = _parameters.value(j);
-        #                                parameterType               = parameter.GetType();
-        #
-        #                                if (! genericMethodParameterType.Equals(parameterType))
-        #                                {
-        #                                    parametersEqual = false;
-        #                                }
-        #                            }
-        #
-        #                            if (parametersEqual)
-        #                            {
-        #                                break;
-        #                            }
-        #                            else
-        #                            {
-        #                                methodInfo = null;
-        #                            }
-        #                        }
-        #                    }
-        #                    else
-        #                    {
-        #                        methodInfo = null;
-        #                    }
-        #                }
-        #            }
-        #        }
-        #        else
-        #        {
-        #            methodInfo = classType.GetMethod(_methodName);
-        #        }
-        #
-        #        if ( CLRInterop::isNull(methodInfo))
-        #            throw Error( strfmt("Метод %1<%2> в классе %3 не найден!"
-        #                       , _methodName
-        #                       , CLRInterop::getAnyTypeForObject(_type.ToString())
-        #                       , CLRInterop::getAnyTypeForObject(classType.ToString()))
-        #                       );
-        #
-        #        methodInfo = methodInfo.MakeGenericMethod(methodType);         //Gets generic method of specified type(s)
-        #
-        #        ret = methodInfo.Invoke(_class, parameters);
-        #    }
-        #    catch (Exception::CLRError)
-        #    {
-        #        //BP deviation documented
-        #        e = CLRInterop::getLastException();
-        #        throw error(e.ToString());
-        #    }
-        #
-        #    return ret;
-        #}
-      ENDSOURCE
-      SOURCE #invokeGenericStatic
-        #/// <summary>
-        #/// Invokes generic static method
-        #/// </summary>
-        #/// <param name="_classType">
-        #/// Object type which method should be invoked
-        #/// </param>
-        #/// <param name="_methodName">
-        #/// Name of method
-        #/// </param>
-        #/// <param name="_type">
-        #/// Required type
-        #/// </param>
-        #/// <param name="_parameters">
-        #/// array of parameters for execution
-        #/// </param>
-        #/// <param name="_overloaded">
-        #/// Is method overloaded
-        #/// </param>
-        #/// <returns>
-        #/// Return value of invoked method
-        #/// </returns>
-        #/// <exception cref="Exception::Error">
-        #/// If error occur when executing method
-        #/// </exception>
-        #protected System.Object invokeGenericStatic(
-        #    System.Type        _classType
-        #  , str                _methodName
-        #  , System.Type        _type
-        #  , Array              _parameters
-        #  , boolean            _overloaded = false
-        #)
-        #{
-        #    System.Type                  parameterType;
-        #    int                          i = _parameters.lastIndex();
-        #    //BP deviation documented
-        #    System.Type[]                parameterTypes = new System.Type[i]();
-        #    //BP deviation documented
-        #    System.Type[]                methodType     = new System.Type[1]();
-        #    //BP deviation documented
-        #    System.Object[]              parameters     = new System.Object[i]();
-        #    System.Object                parameter;
-        #
-        #    System.Reflection.MethodInfo methodInfo;
-        #    System.Object                ret;
-        #
-        #    System.Exception             e;
-        #
-        #    System.Reflection.MethodInfo[]      methods;
-        #    int                                 methodsQty, genericMethodParametersQty, j;
-        #    str                                 genericMethodName;
-        #    System.Reflection.ParameterInfo[]   genericMethodParameters;
-        #    System.Reflection.ParameterInfo     genericMethodParameterInfo;
-        #    System.Type                         genericMethodParameterType;
-        #    System.Reflection.MethodInfo        genericMethodInfo;
-        #    boolean                             parametersEqual;
-        #
-        #    try
-        #    {
-        #        for (i = 1; i <= _parameters.lastIndex(); i++)
-        #        {
-        #            parameter = _parameters.value(i);
-        #            parameterType = parameter.GetType();
-        #            parameterTypes.SetValue(parameterType, i - 1);
-        #            parameters.SetValue(parameter, i - 1);
-        #        }
-        #
-        #        methodType.SetValue(_type, 0);
-        #
-        #        if (_overloaded)
-        #        {
-        #            methodInfo = _classType.GetMethod(_methodName, parameterTypes); //Gets overload with parameters specified
-        #
-        #            if (! methodInfo)
-        #            {
-        #                methods     = _classType.GetMethods();
-        #                methodsQty  = methods.get_Length();
-        #
-        #                for (i = 1; i <= methodsQty; i++)
-        #                {
-        #                    methodInfo          = methods.GetValue(i-1);
-        #                    genericMethodName   = methodInfo.get_Name();
-        #
-        #                    if (genericMethodName == _methodName)
-        #                    {
-        #                        genericMethodInfo           = methodInfo.MakeGenericMethod(methodType);
-        #                        genericMethodParameters     = genericMethodInfo.GetParameters();
-        #                        genericMethodParametersQty  = genericMethodParameters.get_Length();
-        #
-        #                        if (genericMethodParametersQty == _parameters.lastIndex())
-        #                        {
-        #                            parametersEqual = true;
-        #
-        #                            for (j = 1; j <= genericMethodParametersQty; j++)
-        #                            {
-        #                                genericMethodParameterInfo  = genericMethodParameters.GetValue(j-1);
-        #                                genericMethodParameterType  = genericMethodParameterInfo.get_ParameterType();
-        #                                parameter                   = _parameters.value(j);
-        #                                parameterType               = parameter.GetType();
-        #
-        #                                if ( !genericMethodParameterType.Equals(parameterType)
-        #                                  && !CLRInterop::getAnyTypeForObject(genericMethodParameterType.IsAssignableFrom(parameterType)))
-        #                                {
-        #                                    parametersEqual = false;
-        #                                }
-        #                            }
-        #
-        #                            if (parametersEqual)
-        #                            {
-        #                                break;
-        #                            }
-        #                            else
-        #                            {
-        #                                methodInfo = null;
-        #                            }
-        #                        }
-        #                    }
-        #                    else
-        #                    {
-        #                        methodInfo = null;
-        #                    }
-        #                }
-        #            }
-        #        }
-        #        else
-        #        {
-        #            methodInfo = _classType.GetMethod(_methodName);
-        #        }
-        #
-        #        if ( CLRInterop::isNull(methodInfo))
-        #            throw Error( strfmt("Метод %1<%2> в классе %3 не найден!"
-        #                       , _methodName
-        #                       , CLRInterop::getAnyTypeForObject(_type.ToString())
-        #                       , CLRInterop::getAnyTypeForObject(_classType.ToString()))
-        #                       );
-        #
-        #        if ( methodInfo.get_IsGenericMethod())
-        #            methodInfo = methodInfo.MakeGenericMethod(methodType);         //Gets generic method of specified type(s)
-        #
-        #        ret = methodInfo.Invoke( null, parameters);
-        #    }
-        #    catch (Exception::CLRError)
-        #    {
-        #        //BP deviation documented
-        #        e = CLRInterop::getLastException();
-        #        throw error(e.ToString());
-        #    }
-        #
-        #    return ret;
         #}
       ENDSOURCE
       SOURCE #itemType
@@ -1143,6 +922,54 @@ Formatversion: 1
         #    itemTypeName    = this.getItemTypeName();
         #
         #    return itemTypeName;
+        #}
+      ENDSOURCE
+      SOURCE #json
+        #str json()
+        #{
+        #    return SysJSONConvert::construct().SerializeCLRObject( this.collection());
+        #}
+      ENDSOURCE
+      SOURCE #Max
+        #real Max()
+        #{
+        #    real            ret;
+        #    System.Object   retCLR;
+        #;
+        #    if ( !this.Count())
+        #        throw Error("Коллекция не содержит элементов!");
+        #
+        #    retCLR = SysCLRReflection::invokeStatic(
+        #        SysICollectionCLR::SystemLinqEnumerableType()
+        #      , "Max"
+        #      , SysCLRReflection::getArray( this.collection())
+        #      , true
+        #    );
+        #
+        #    ret = CLRInterop::getAnyTypeForObject(retCLR);
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #Min
+        #real Min()
+        #{
+        #    real            ret;
+        #    System.Object   retCLR;
+        #;
+        #    if ( !this.Count())
+        #        throw Error("Коллекция не содержит элементов!");
+        #
+        #    retCLR = SysCLRReflection::invokeStatic(
+        #        SysICollectionCLR::SystemLinqEnumerableType()
+        #      , "Min"
+        #      , SysCLRReflection::getArray( this.collection())
+        #      , true
+        #    );
+        #
+        #    ret = CLRInterop::getAnyTypeForObject(retCLR);
+        #
+        #    return ret;
         #}
       ENDSOURCE
       SOURCE #new
@@ -1185,7 +1012,11 @@ Formatversion: 1
         #SysICollectionCLR Remove(anytype item)
         #{
         #;
-        #    this.invoke( collection, "Remove", this.params( this.getObjectForAnyType(item)));
+        #    SysCLRReflection::invokeMethod(
+        #        collection
+        #      , "Remove"
+        #      , SysCLRReflection::getArray( this.getObjectForAnyType(item))
+        #    );
         #
         #    return this;
         #}
@@ -1196,20 +1027,20 @@ Formatversion: 1
         #    SysICollectionCLR   ret;
         #    System.Object       unionResult;
         #;
-        #    unionResult    = this.invokeGenericStatic(
+        #    unionResult    = SysCLRReflection::invokeStaticGenericType(
         #        SysICollectionCLR::SystemLinqEnumerableType()
         #      , "Union"
         #      , this.itemType()
-        #      , this.params( this.collection(), _collection.collection())
+        #      , SysCLRReflection::getArray( this.collection(), _collection.collection())
         #      , true
         #    );
         #
         #    ret = SysICollectionCLR::constructCollection(
-        #        this.invokeGenericStatic(
+        #        SysCLRReflection::invokeStaticGenericType(
         #            SysICollectionCLR::SystemLinqEnumerableType()
         #          , "ToList"
         #          , this.itemType()
-        #          , this.params( unionResult)
+        #          , SysCLRReflection::getArray( unionResult)
         #        )
         #    );
         #
@@ -1236,6 +1067,48 @@ Formatversion: 1
         #    collection        = System.Activator::CreateInstance( collectionType);
         #
         #    return SysICollectionCLR::constructCollection( collection);
+        #}
+      ENDSOURCE
+      SOURCE #getTypeNameForTypes
+        #protected static str getTypeNameForTypes( Types _type)
+        #{
+        #    str ret;
+        #;
+        #    switch (_type)
+        #    {
+        #        case Types::AnyType:
+        #        case Types::Class:
+        #        case Types::Record:
+        #            ret = "System.Object";
+        #            break;
+        #        case Types::Time:
+        #        case Types::Integer:
+        #        case Types::Enum:
+        #            ret = "System.Int32";
+        #            break;
+        #        case Types::Int64:
+        #            ret = "System.Int64";
+        #            break;
+        #        case Types::Real:
+        #            ret = "System.Double";
+        #            break;
+        #        case Types::Guid:
+        #            ret = "System.Guid";
+        #            break;
+        #        case Types::String:
+        #        case Types::RString:
+        #        case Types::VarString:
+        #            ret = "System.String";
+        #            break;
+        #        case Types::UtcDateTime:
+        #        case Types::Date:
+        #            ret = "System.DateTime";
+        #            break;
+        #        default:
+        #            throw Error(Error::unsupportedEnumValue( funcname(), _type));
+        #    }
+        #
+        #    return ret;
         #}
       ENDSOURCE
       SOURCE #SystemLinqEnumerableType
@@ -1272,7 +1145,9 @@ Formatversion: 1
         #///    - новый List с указанием названия типа
         #///         SysListCLR::constructTypeName( "System.String")
         #///    - новый List с указанием типа
-        #///         SysListCLR::constructType( System.Type::GetType("System.String"))
+        #///         SysListCLR::constructType( Types::String))
+        #///    - новый List с указанием типа CLR
+        #///         SysListCLR::constructTypeCLR( System.Type::GetType("System.String"))
         #///
         #/// </summary>
         #/// <remarks>
@@ -1288,6 +1163,14 @@ Formatversion: 1
         #    return new SysListCLR(_list);
         #}
       ENDSOURCE
+      SOURCE #constructType
+        #static SysListCLR constructType(
+        #    Types _type = Types::AnyType
+        #)
+        #{
+        #    return SysListCLR::constructTypeName( SysICollectionCLR::getTypeNameForTypes(_type));
+        #}
+      ENDSOURCE
       SOURCE #constructTypeCLR
         #static SysListCLR constructTypeCLR(System.Type _type)
         #{
@@ -1301,7 +1184,9 @@ Formatversion: 1
         #}
       ENDSOURCE
       SOURCE #constructTypeName
-        #static SysListCLR constructTypeName( str _itemTypeName = "System.Object")
+        #static SysListCLR constructTypeName(
+        #    str _itemTypeName = SysICollectionCLR::getTypeNameForTypes(Types::AnyType)
+        #)
         #{
         #    return SysICollectionCLR::constructCollectionTypeName( strfmt( "System.Collections.Generic.List`1[%1]", _itemTypeName));
         #}
@@ -1324,26 +1209,6 @@ Formatversion: 1
     
     METHODS
       Version: 3
-      SOURCE #testConcat
-        #void testConcat()
-        #{
-        #;
-        #    sysSet  = SysSet::constructType(Types::String)
-        #        .Add("01")
-        #        .Add("02")
-        #        .Add("03")
-        #        .Add("04")
-        #        .Add("05")
-        #        .Concat( SysSet::constructType(Types::String)
-        #            .Add("02")
-        #            .Add("03")
-        #            .Add("06")
-        #        )
-        #    ;
-        #    this.assertNotNull(sysSet);
-        #    this.assertEquals( 6, sysSet.Count());
-        #}
-      ENDSOURCE
       SOURCE #classDeclaration
         #class SysSetTest extends SysTestCase
         #{
@@ -1373,6 +1238,26 @@ Formatversion: 1
         #    this.assertEquals( 1, sysSet.Count());
         #    sysSet.Add(20);
         #    this.assertEquals( 2, sysSet.Count());
+        #}
+      ENDSOURCE
+      SOURCE #testConcat
+        #void testConcat()
+        #{
+        #;
+        #    sysSet  = SysSet::constructType(Types::String)
+        #        .Add("01")
+        #        .Add("02")
+        #        .Add("03")
+        #        .Add("04")
+        #        .Add("05")
+        #        .Concat( SysSet::constructType(Types::String)
+        #            .Add("02")
+        #            .Add("03")
+        #            .Add("06")
+        #        )
+        #    ;
+        #    this.assertNotNull(sysSet);
+        #    this.assertEquals( 6, sysSet.Count());
         #}
       ENDSOURCE
       SOURCE #testConstructSet
@@ -1453,6 +1338,44 @@ Formatversion: 1
         #    this.assertEquals( 2, i);
         #}
       ENDSOURCE
+      SOURCE #testMax
+        #void testMax()
+        #{
+        #;
+        #    this.constructType( Types::Integer);
+        #    sysSet.Add(10);
+        #    sysSet.Add(20);
+        #    this.assertEquals( 20, any2int(sysSet.Max()));
+        #
+        #    this.constructType( Types::Integer);
+        #    sysSet.Add(-10);
+        #    sysSet.Add(-20);
+        #    this.assertEquals( -10, any2int(sysSet.Max()));
+        #
+        #    this.constructType( Types::Integer);
+        #    this.parmExceptionExpected( true, "Коллекция не содержит элементов!");
+        #    sysSet.Max();
+        #}
+      ENDSOURCE
+      SOURCE #testMin
+        #void testMin()
+        #{
+        #;
+        #    this.constructType( Types::Integer);
+        #    sysSet.Add(10);
+        #    sysSet.Add(20);
+        #    this.assertEquals( 10, any2int(sysSet.Min()));
+        #
+        #    this.constructType( Types::Integer);
+        #    sysSet.Add(-10);
+        #    sysSet.Add(-20);
+        #    this.assertEquals( -20, any2int(sysSet.Min()));
+        #
+        #    this.constructType( Types::Integer);
+        #    this.parmExceptionExpected( true, "Коллекция не содержит элементов!");
+        #    sysSet.Min();
+        #}
+      ENDSOURCE
       SOURCE #testRemove
         #void testRemove()
         #{
@@ -1506,48 +1429,6 @@ Formatversion: 1
     
     METHODS
       Version: 3
-      SOURCE #testConcat
-        #void testConcat()
-        #{
-        #;
-        #    sysList  = SysList::constructType(Types::String)
-        #        .Add("01")
-        #        .Add("02")
-        #        .Add("03")
-        #        .Add("04")
-        #        .Add("04")
-        #        .Add("05")
-        #        .Concat( SysList::constructType(Types::String)
-        #            .Add("02")
-        #            .Add("03")
-        #            .Add("06")
-        #        )
-        #    ;
-        #    this.assertNotNull(sysList);
-        #    this.assertEquals( 9, sysList.Count());
-        #}
-      ENDSOURCE
-      SOURCE #testUnion
-        #void testUnion()
-        #{
-        #;
-        #    sysList  = SysList::constructType(Types::String)
-        #        .Add("01")
-        #        .Add("02")
-        #        .Add("03")
-        #        .Add("04")
-        #        .Add("04")
-        #        .Add("05")
-        #        .Union( SysList::constructType(Types::String)
-        #            .Add("02")
-        #            .Add("03")
-        #            .Add("06")
-        #        )
-        #    ;
-        #    this.assertNotNull(sysList);
-        #    this.assertEquals( 6, sysList.Count());
-        #}
-      ENDSOURCE
       SOURCE #classDeclaration
         #class SysListTest extends SysTestCase
         #{
@@ -1577,6 +1458,27 @@ Formatversion: 1
         #    this.assertEquals( 1, sysList.Count());
         #    sysList.Add(20);
         #    this.assertEquals( 2, sysList.Count());
+        #}
+      ENDSOURCE
+      SOURCE #testConcat
+        #void testConcat()
+        #{
+        #;
+        #    sysList  = SysList::constructType(Types::String)
+        #        .Add("01")
+        #        .Add("02")
+        #        .Add("03")
+        #        .Add("04")
+        #        .Add("04")
+        #        .Add("05")
+        #        .Concat( SysList::constructType(Types::String)
+        #            .Add("02")
+        #            .Add("03")
+        #            .Add("06")
+        #        )
+        #    ;
+        #    this.assertNotNull(sysList);
+        #    this.assertEquals( 9, sysList.Count());
         #}
       ENDSOURCE
       SOURCE #testConstructList
@@ -1658,6 +1560,44 @@ Formatversion: 1
         #    this.assertEquals( 2, i);
         #}
       ENDSOURCE
+      SOURCE #testMax
+        #void testMax()
+        #{
+        #;
+        #    this.constructType( Types::Integer);
+        #    sysList.Add(10);
+        #    sysList.Add(20);
+        #    this.assertEquals( 20, any2int(sysList.Max()));
+        #
+        #    this.constructType( Types::Integer);
+        #    sysList.Add(-10);
+        #    sysList.Add(-20);
+        #    this.assertEquals( -10, any2int(sysList.Max()));
+        #
+        #    this.constructType( Types::Integer);
+        #    this.parmExceptionExpected( true, "Коллекция не содержит элементов!");
+        #    sysList.Max();
+        #}
+      ENDSOURCE
+      SOURCE #testMin
+        #void testMin()
+        #{
+        #;
+        #    this.constructType( Types::Integer);
+        #    sysList.Add(10);
+        #    sysList.Add(20);
+        #    this.assertEquals( 10, any2int(sysList.Min()));
+        #
+        #    this.constructType( Types::Integer);
+        #    sysList.Add(-10);
+        #    sysList.Add(-20);
+        #    this.assertEquals( -20, any2int(sysList.Min()));
+        #
+        #    this.constructType( Types::Integer);
+        #    this.parmExceptionExpected( true, "Коллекция не содержит элементов!");
+        #    sysList.Min();
+        #}
+      ENDSOURCE
       SOURCE #testRemove
         #void testRemove()
         #{
@@ -1671,6 +1611,27 @@ Formatversion: 1
         #    this.assertEquals( 2, sysList.Count());
         #    sysList.Remove(20);
         #    this.assertEquals( 1, sysList.Count());
+        #}
+      ENDSOURCE
+      SOURCE #testUnion
+        #void testUnion()
+        #{
+        #;
+        #    sysList  = SysList::constructType(Types::String)
+        #        .Add("01")
+        #        .Add("02")
+        #        .Add("03")
+        #        .Add("04")
+        #        .Add("04")
+        #        .Add("05")
+        #        .Union( SysList::constructType(Types::String)
+        #            .Add("02")
+        #            .Add("03")
+        #            .Add("06")
+        #        )
+        #    ;
+        #    this.assertNotNull(sysList);
+        #    this.assertEquals( 6, sysList.Count());
         #}
       ENDSOURCE
     ENDMETHODS
@@ -1697,6 +1658,13 @@ Formatversion: 1
         #    SysListCLR     sysList;
         #}
       ENDSOURCE
+      SOURCE #constructType
+        #protected void constructType( Types _type)
+        #{
+        #;
+        #    sysList  = SysListCLR::constructType( _type);
+        #}
+      ENDSOURCE
       SOURCE #constructTypeName
         #protected void constructTypeName( str _typeName)
         #{
@@ -1704,15 +1672,86 @@ Formatversion: 1
         #    sysList  = SysListCLR::constructTypeName( _typeName);
         #}
       ENDSOURCE
+      SOURCE #getValueOfAnytype
+        #protected anytype getValueOfAnytype(
+        #    Types   _type
+        #  , int     _iteration = 1
+        #)
+        #{
+        #    anytype     ret;
+        #    timeOfDay   time;
+        #;
+        #    switch (_type)
+        #    {
+        #        case Types::AnyType:
+        #        case Types::Class:
+        #        case Types::Record:
+        #            ret = SysListCLR::constructType().Add( 30 + _iteration).Add( 40 + _iteration);
+        #            break;
+        #        case Types::Integer:
+        #            ret = 10 + _iteration;
+        #            break;
+        #        case Types::Enum:
+        #            ret = any2int(Types::Container);
+        #            break;
+        #        case Types::Int64:
+        #            ret = 123456667 + _iteration;
+        #            break;
+        #        case Types::Real:
+        #            ret = 345.98 + _iteration;
+        #            break;
+        #        case Types::Guid:
+        #            ret = newguid();
+        #            break;
+        #        case Types::Time:
+        #            ret = time + _iteration;
+        #            break;
+        #        case Types::String:
+        #        case Types::RString:
+        #        case Types::VarString:
+        #            ret = "String" + int2str(_iteration);
+        #            break;
+        #        case Types::UtcDateTime:
+        #            ret = DateTimeUtil::addHours( DateTimeUtil::utcNow(), _iteration);
+        #            break;
+        #        case Types::Date:
+        #            ret = systemdateget() + _iteration;
+        #            break;
+        #        default:
+        #            throw Error(Error::unsupportedEnumValue( funcname(), _type));
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
       SOURCE #testAdd
         #void testAdd()
         #{
+        #    ISysEnumerator   se;
+        #    Types           type;
         #;
-        #    this.constructTypeName("System.Int32");
-        #    sysList.Add(10);
-        #    this.assertEquals( 1, sysList.Count());
-        #    sysList.Add(20);
-        #    this.assertEquals( 2, sysList.Count());
+        #    setprefix("Add");
+        #
+        #    se = SysEnumerator_Enum::construct( new SysDictEnum(enumnum(Types)));
+        #    while ( se.moveNext())
+        #    {
+        #        if ( se.current() == Types::Container
+        #          || se.current() == Types::UserType
+        #          || se.current() == Types::BLOB
+        #          || se.current() == Types::void
+        #           )
+        #            continue;
+        #
+        #        type    = se.current();
+        #
+        #        setprefix(enum2str(type));
+        #
+        #        this.constructType(type);
+        #        sysList.Add( this.getValueOfAnytype( type, 1));
+        #        this.assertEquals( 1, sysList.Count());
+        #        sysList.Add( this.getValueOfAnytype( type, 2));
+        #        this.assertEquals( 2, sysList.Count());
+        #    }
         #}
       ENDSOURCE
       SOURCE #testConcat
@@ -1737,12 +1776,34 @@ Formatversion: 1
         #    this.assertEquals( 10, sysList.Count());
         #}
       ENDSOURCE
-      SOURCE #testConstructType
-        #void testConstructType()
+      SOURCE #testConstructTypeName
+        #void testConstructTypeName()
         #{
         #;
         #    this.constructTypeName( "System.String");
         #    this.assertNotNull(sysList);
+        #}
+      ENDSOURCE
+      SOURCE #testConstructTypes
+        #void testConstructTypes()
+        #{
+        #    ISysEnumerator   se;
+        #;
+        #    se = SysEnumerator_Enum::construct( new SysDictEnum(enumnum(Types)));
+        #    while ( se.moveNext())
+        #    {
+        #        if ( se.current() == Types::Container
+        #          || se.current() == Types::UserType
+        #          || se.current() == Types::BLOB
+        #          || se.current() == Types::void
+        #           )
+        #            continue;
+        #
+        #        setprefix(enum2str(se.current()));
+        #
+        #        this.constructType( se.current());
+        #        this.assertNotNull(sysList);
+        #    }
         #}
       ENDSOURCE
       SOURCE #testContains
@@ -1817,6 +1878,44 @@ Formatversion: 1
         #    this.assertEquals( itemTypeName, sysList.itemTypeName());
         #}
       ENDSOURCE
+      SOURCE #testMax
+        #void testMax()
+        #{
+        #;
+        #    this.constructType( Types::Integer);
+        #    sysList.Add(10);
+        #    sysList.Add(20);
+        #    this.assertEquals( 20, any2int(sysList.Max()));
+        #
+        #    this.constructType( Types::Integer);
+        #    sysList.Add(-10);
+        #    sysList.Add(-20);
+        #    this.assertEquals( -10, any2int(sysList.Max()));
+        #
+        #    this.constructType( Types::Integer);
+        #    this.parmExceptionExpected( true, "Коллекция не содержит элементов!");
+        #    sysList.Max();
+        #}
+      ENDSOURCE
+      SOURCE #testMin
+        #void testMin()
+        #{
+        #;
+        #    this.constructType( Types::Integer);
+        #    sysList.Add(10);
+        #    sysList.Add(20);
+        #    this.assertEquals( 10, any2int(sysList.Min()));
+        #
+        #    this.constructType( Types::Integer);
+        #    sysList.Add(-10);
+        #    sysList.Add(-20);
+        #    this.assertEquals( -20, any2int(sysList.Min()));
+        #
+        #    this.constructType( Types::Integer);
+        #    this.parmExceptionExpected( true, "Коллекция не содержит элементов!");
+        #    sysList.Min();
+        #}
+      ENDSOURCE
       SOURCE #testRemove
         #void testRemove()
         #{
@@ -1885,6 +1984,13 @@ Formatversion: 1
         UTILOBJECTID 41876
         NODETYPE 329
         NAME #ICollection
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 45
+        UTILOBJECTID 41900
+        NODETYPE 329
+        NAME #ICollectionStatic
       ENDNODE
       BEGINNODE
         FILETYPE 0

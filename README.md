@@ -10,6 +10,8 @@
 * `Except(ICollection collection)`
 * `Union(ICollection collection)`
 * `Concat(ICollection collection)`
+* `Min`
+* `Max`
 
 Отнаследовать от :
 * `Enumerable`
@@ -24,3 +26,4 @@
 ### Зависимости от других репозиториев
 * [SysEnumerators](https://github.com/mazzy-ax/SysEnumerators)
 * [.Net Framework 4 Support](https://github.com/d-tolstov/Ax2009-NetFramework4-Support)
+* [SysCLRReflection](https://github.com/d-tolstov/Ax2009-SysCLRReflection)
