@@ -110,9 +110,9 @@ Formatversion: 1
         #{
         #}
       ENDSOURCE
-      SOURCE #Max
+      SOURCE #MaxValue
         #/// <summary>
-        #/// Максимальное значение в коллекции (для числовых коллекций)
+        #/// Максимальное значение в коллекции
         #/// </summary>
         #/// <returns>
         #///
@@ -120,13 +120,13 @@ Formatversion: 1
         #/// <remarks>
         #///
         #/// </remarks>
-        #real Max()
+        #anytype MaxValue()
         #{
         #}
       ENDSOURCE
-      SOURCE #Min
+      SOURCE #MinValue
         #/// <summary>
-        #/// Минимальное значение в коллекции (для числовых коллекций)
+        #/// Минимальное значение в коллекции
         #/// </summary>
         #/// <returns>
         #///
@@ -134,7 +134,7 @@ Formatversion: 1
         #/// <remarks>
         #///
         #/// </remarks>
-        #real Min()
+        #anytype MinValue()
         #{
         #}
       ENDSOURCE
@@ -152,6 +152,20 @@ Formatversion: 1
         #///
         #/// </remarks>
         #ICollection Remove( anytype item)
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #Sum
+        #/// <summary>
+        #/// Сумма значений числовой коллекции
+        #/// </summary>
+        #/// <returns>
+        #///
+        #/// </returns>
+        #/// <remarks>
+        #///
+        #/// </remarks>
+        #real Sum()
         #{
         #}
       ENDSOURCE
@@ -264,6 +278,27 @@ Formatversion: 1
         #    return this;
         #}
       ENDSOURCE
+      SOURCE #assertCollectionIsNumber
+        #protected void assertCollectionIsNumber(
+        #    str     _funcname
+        #)
+        #{
+        #;
+        #    switch (this.set().typeId())
+        #    {
+        #        case Types::Int64:
+        #        case Types::Integer:
+        #        case Types::Real:
+        #            return;
+        #    }
+        #
+        #    throw Error(
+        #        strfmt( "Функцию %1 можно вызывать только для числовых коллекций! Обратитесь к разработчикам."
+        #              , _funcname
+        #              )
+        #    );
+        #}
+      ENDSOURCE
       SOURCE #classDeclaration
         #/// <summary>
         #/// Обертка для класса Set , реализующая интерфейс ICollection
@@ -321,10 +356,10 @@ Formatversion: 1
         #    return SysJSONConvert::construct().SerializeObject( this.set());
         #}
       ENDSOURCE
-      SOURCE #Max
-        #real Max()
+      SOURCE #MaxValue
+        #anytype MaxValue()
         #{
-        #    real        ret;
+        #    anytype     ret;
         #    Enumerator  enumerator;
         #;
         #    if ( !this.set().elements())
@@ -339,10 +374,10 @@ Formatversion: 1
         #    return ret;
         #}
       ENDSOURCE
-      SOURCE #Min
-        #real Min()
+      SOURCE #MinValue
+        #anytype MinValue()
         #{
-        #    real        ret;
+        #    anytype     ret;
         #    Enumerator  enumerator;
         #;
         #    if ( !this.set().elements())
@@ -378,6 +413,23 @@ Formatversion: 1
         #Set set()
         #{
         #    return set;
+        #}
+      ENDSOURCE
+      SOURCE #Sum
+        #real Sum()
+        #{
+        #    real        ret;
+        #    Enumerator  enumerator;
+        #;
+        #    this.assertCollectionIsNumber(funcname());
+        #
+        #    enumerator  = this.GetEnumerator();
+        #    while (enumerator.moveNext())
+        #    {
+        #        ret += enumerator.current();
+        #    }
+        #
+        #    return ret;
         #}
       ENDSOURCE
       SOURCE #Union
@@ -424,6 +476,27 @@ Formatversion: 1
         #    list.addEnd( item);
         #
         #    return this;
+        #}
+      ENDSOURCE
+      SOURCE #assertCollectionIsNumber
+        #protected void assertCollectionIsNumber(
+        #    str     _funcname
+        #)
+        #{
+        #;
+        #    switch (this.list().typeId())
+        #    {
+        #        case Types::Int64:
+        #        case Types::Integer:
+        #        case Types::Real:
+        #            return;
+        #    }
+        #
+        #    throw Error(
+        #        strfmt( "Функцию %1 можно вызывать только для числовых коллекций! Обратитесь к разработчикам."
+        #              , _funcname
+        #              )
+        #    );
         #}
       ENDSOURCE
       SOURCE #classDeclaration
@@ -510,10 +583,10 @@ Formatversion: 1
         #    return list;
         #}
       ENDSOURCE
-      SOURCE #Max
-        #real Max()
+      SOURCE #MaxValue
+        #anytype MaxValue()
         #{
-        #    real        ret;
+        #    anytype     ret;
         #    Enumerator  enumerator;
         #    boolean     firstRecord = true;
         #;
@@ -535,10 +608,10 @@ Formatversion: 1
         #    return ret;
         #}
       ENDSOURCE
-      SOURCE #Min
-        #real Min()
+      SOURCE #MinValue
+        #anytype MinValue()
         #{
-        #    real        ret;
+        #    anytype     ret;
         #    Enumerator  enumerator;
         #    boolean     firstRecord = true;
         #;
@@ -588,6 +661,23 @@ Formatversion: 1
         #    }
         #
         #    return this;
+        #}
+      ENDSOURCE
+      SOURCE #Sum
+        #real Sum()
+        #{
+        #    real        ret;
+        #    Enumerator  enumerator;
+        #;
+        #    this.assertCollectionIsNumber(funcname());
+        #
+        #    enumerator  = this.GetEnumerator();
+        #    while (enumerator.moveNext())
+        #    {
+        #        ret += enumerator.current();
+        #    }
+        #
+        #    return ret;
         #}
       ENDSOURCE
       SOURCE #Union
@@ -646,6 +736,27 @@ Formatversion: 1
     
     METHODS
       Version: 3
+      SOURCE #assertCollectionIsNumber
+        #protected void assertCollectionIsNumber(
+        #    str     _funcname
+        #)
+        #{
+        #;
+        #    switch (this.itemTypeName())
+        #    {
+        #        case "System.Int64":
+        #        case "System.Int32":
+        #        case "System.Double":
+        #            return;
+        #    }
+        #
+        #    throw Error(
+        #        strfmt( "Функцию %1 можно вызывать только для числовых коллекций! Обратитесь к разработчикам."
+        #              , _funcname
+        #              )
+        #    );
+        #}
+      ENDSOURCE
       SOURCE #Add
         #SysICollectionCLR Add(anytype item)
         #{
@@ -830,6 +941,8 @@ Formatversion: 1
         #    System.Reflection.PropertyInfo  propertyObject;
         #    System.Type                     itemTypeObject;
         #;
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
         #    typeObject      = object.GetType();
         #    propertyObject  = typeObject.GetProperty("Item");
         #    itemTypeObject  = propertyObject.get_PropertyType();
@@ -841,6 +954,8 @@ Formatversion: 1
         #{
         #    str                             ret;
         #;
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
         #    ret = this.itemType().ToString();
         #
         #    return ret;
@@ -930,42 +1045,48 @@ Formatversion: 1
         #    return SysJSONConvert::construct().SerializeCLRObject( this.collection());
         #}
       ENDSOURCE
-      SOURCE #Max
-        #real Max()
+      SOURCE #MaxValue
+        #anytype MaxValue()
         #{
-        #    real            ret;
+        #    anytype         ret;
         #    System.Object   retCLR;
         #;
         #    if ( !this.Count())
         #        throw Error("Коллекция не содержит элементов!");
         #
-        #    retCLR = SysCLRReflection::invokeStatic(
+        #    retCLR = SysCLRReflection::invokeStaticGenericType(
         #        SysICollectionCLR::SystemLinqEnumerableType()
         #      , "Max"
+        #      , this.itemType()
         #      , SysCLRReflection::getArray( this.collection())
         #      , true
         #    );
+        #
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
         #
         #    ret = CLRInterop::getAnyTypeForObject(retCLR);
         #
         #    return ret;
         #}
       ENDSOURCE
-      SOURCE #Min
-        #real Min()
+      SOURCE #MinValue
+        #anytype MinValue()
         #{
-        #    real            ret;
+        #    anytype         ret;
         #    System.Object   retCLR;
         #;
         #    if ( !this.Count())
         #        throw Error("Коллекция не содержит элементов!");
         #
-        #    retCLR = SysCLRReflection::invokeStatic(
+        #    retCLR = SysCLRReflection::invokeStaticGenericType(
         #        SysICollectionCLR::SystemLinqEnumerableType()
         #      , "Min"
+        #      , this.itemType()
         #      , SysCLRReflection::getArray( this.collection())
         #      , true
         #    );
+        #
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
         #
         #    ret = CLRInterop::getAnyTypeForObject(retCLR);
         #
@@ -976,6 +1097,8 @@ Formatversion: 1
         #void new( System.Object _collection)
         #{
         #;
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
         #    if ( CLRInterop::isNull(_collection))
         #        throw Error(strfmt("В функцию %1 не передан параметр _collection!", funcname()));
         #
@@ -1019,6 +1142,29 @@ Formatversion: 1
         #    );
         #
         #    return this;
+        #}
+      ENDSOURCE
+      SOURCE #Sum
+        #real Sum()
+        #{
+        #    real            ret;
+        #    System.Object   retCLR;
+        #;
+        #    this.assertCollectionIsNumber( funcname());
+        #
+        #    retCLR = SysCLRReflection::invokeStaticGenericType(
+        #        SysICollectionCLR::SystemLinqEnumerableType()
+        #      , "Sum"
+        #      , this.itemType()
+        #      , SysCLRReflection::getArray( this.collection())
+        #      , true
+        #    );
+        #
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
+        #    ret = CLRInterop::getAnyTypeForObject(retCLR);
+        #
+        #    return ret;
         #}
       ENDSOURCE
       SOURCE #Union
@@ -1067,6 +1213,16 @@ Formatversion: 1
         #    collection        = System.Activator::CreateInstance( collectionType);
         #
         #    return SysICollectionCLR::constructCollection( collection);
+        #}
+      ENDSOURCE
+      SOURCE #getTypeCLRForTypes
+        #protected static System.Type getTypeCLRForTypes( Types _type)
+        #{
+        #    System.Type     ret;
+        #;
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
+        #    return System.Type::GetType( SysICollectionCLR::getTypeNameForTypes(_type));
         #}
       ENDSOURCE
       SOURCE #getTypeNameForTypes
@@ -1204,11 +1360,33 @@ Formatversion: 1
     PROPERTIES
       Name                #SysSetTest
       Extends             #SysTestCase
-      RunOn               #Called from
+      RunOn               #Server
     ENDPROPERTIES
     
     METHODS
       Version: 3
+      SOURCE #testSum
+        #void testSum()
+        #{
+        #;
+        #    this.constructType( Types::Integer);
+        #    sysSet.Add(10);
+        #    sysSet.Add(20);
+        #    this.assertEquals( 30, any2int(sysSet.Sum()));
+        #
+        #    this.constructType( Types::Integer);
+        #    sysSet.Add(-10);
+        #    sysSet.Add(-20);
+        #    this.assertEquals( -30, any2int(sysSet.Sum()));
+        #
+        #    this.constructType( Types::Integer);
+        #    this.assertEquals( 0, any2int(sysSet.Sum()));
+        #
+        #    this.constructType( Types::String);
+        #    this.parmExceptionExpected( true, "Функцию SysSet.Sum можно вызывать только для числовых коллекций! Обратитесь к разработчикам.");
+        #    sysSet.Sum();
+        #}
+      ENDSOURCE
       SOURCE #classDeclaration
         #class SysSetTest extends SysTestCase
         #{
@@ -1338,42 +1516,62 @@ Formatversion: 1
         #    this.assertEquals( 2, i);
         #}
       ENDSOURCE
-      SOURCE #testMax
-        #void testMax()
+      SOURCE #testMaxValue
+        #void testMaxValue()
         #{
         #;
         #    this.constructType( Types::Integer);
         #    sysSet.Add(10);
         #    sysSet.Add(20);
-        #    this.assertEquals( 20, any2int(sysSet.Max()));
+        #    this.assertEquals( 20, any2int(sysSet.MaxValue()));
         #
         #    this.constructType( Types::Integer);
         #    sysSet.Add(-10);
         #    sysSet.Add(-20);
-        #    this.assertEquals( -10, any2int(sysSet.Max()));
+        #    this.assertEquals( -10, any2int(sysSet.MaxValue()));
+        #
+        #    this.constructType( Types::String);
+        #    sysSet.Add("abc");
+        #    sysSet.Add("ab");
+        #    this.assertEquals( "abc", any2str(sysSet.MaxValue()));
+        #
+        #    this.constructType( Types::Date);
+        #    sysSet.Add( 01\01\2010);
+        #    sysSet.Add( 01\01\2011);
+        #    this.assertEquals( 01\01\2011, any2date(sysSet.MaxValue()));
         #
         #    this.constructType( Types::Integer);
         #    this.parmExceptionExpected( true, "Коллекция не содержит элементов!");
-        #    sysSet.Max();
+        #    sysSet.MaxValue();
         #}
       ENDSOURCE
-      SOURCE #testMin
-        #void testMin()
+      SOURCE #testMinValue
+        #void testMinValue()
         #{
         #;
         #    this.constructType( Types::Integer);
         #    sysSet.Add(10);
         #    sysSet.Add(20);
-        #    this.assertEquals( 10, any2int(sysSet.Min()));
+        #    this.assertEquals( 10, any2int(sysSet.MinValue()));
         #
         #    this.constructType( Types::Integer);
         #    sysSet.Add(-10);
         #    sysSet.Add(-20);
-        #    this.assertEquals( -20, any2int(sysSet.Min()));
+        #    this.assertEquals( -20, any2int(sysSet.MinValue()));
+        #
+        #    this.constructType( Types::String);
+        #    sysSet.Add("abc");
+        #    sysSet.Add("ab");
+        #    this.assertEquals( "ab", any2str(sysSet.MinValue()));
+        #
+        #    this.constructType( Types::Date);
+        #    sysSet.Add( 01\01\2010);
+        #    sysSet.Add( 01\01\2011);
+        #    this.assertEquals( 01\01\2010, any2date(sysSet.MinValue()));
         #
         #    this.constructType( Types::Integer);
         #    this.parmExceptionExpected( true, "Коллекция не содержит элементов!");
-        #    sysSet.Min();
+        #    sysSet.MinValue();
         #}
       ENDSOURCE
       SOURCE #testRemove
@@ -1424,7 +1622,7 @@ Formatversion: 1
     PROPERTIES
       Name                #SysListTest
       Extends             #SysTestCase
-      RunOn               #Called from
+      RunOn               #Server
     ENDPROPERTIES
     
     METHODS
@@ -1560,42 +1758,62 @@ Formatversion: 1
         #    this.assertEquals( 2, i);
         #}
       ENDSOURCE
-      SOURCE #testMax
-        #void testMax()
+      SOURCE #testMaxValue
+        #void testMaxValue()
         #{
         #;
         #    this.constructType( Types::Integer);
         #    sysList.Add(10);
         #    sysList.Add(20);
-        #    this.assertEquals( 20, any2int(sysList.Max()));
+        #    this.assertEquals( 20, any2int(sysList.MaxValue()));
         #
         #    this.constructType( Types::Integer);
         #    sysList.Add(-10);
         #    sysList.Add(-20);
-        #    this.assertEquals( -10, any2int(sysList.Max()));
+        #    this.assertEquals( -10, any2int(sysList.MaxValue()));
+        #
+        #    this.constructType( Types::String);
+        #    sysList.Add("abc");
+        #    sysList.Add("ab");
+        #    this.assertEquals( "abc", any2str(sysList.MaxValue()));
+        #
+        #    this.constructType( Types::Date);
+        #    sysList.Add( 01\01\2010);
+        #    sysList.Add( 01\01\2011);
+        #    this.assertEquals( 01\01\2011, any2date(sysList.MaxValue()));
         #
         #    this.constructType( Types::Integer);
         #    this.parmExceptionExpected( true, "Коллекция не содержит элементов!");
-        #    sysList.Max();
+        #    sysList.MaxValue();
         #}
       ENDSOURCE
-      SOURCE #testMin
-        #void testMin()
+      SOURCE #testMinValue
+        #void testMinValue()
         #{
         #;
         #    this.constructType( Types::Integer);
         #    sysList.Add(10);
         #    sysList.Add(20);
-        #    this.assertEquals( 10, any2int(sysList.Min()));
+        #    this.assertEquals( 10, any2int(sysList.MinValue()));
         #
         #    this.constructType( Types::Integer);
         #    sysList.Add(-10);
         #    sysList.Add(-20);
-        #    this.assertEquals( -20, any2int(sysList.Min()));
+        #    this.assertEquals( -20, any2int(sysList.MinValue()));
+        #
+        #    this.constructType( Types::String);
+        #    sysList.Add("abc");
+        #    sysList.Add("ab");
+        #    this.assertEquals( "ab", any2str(sysList.MinValue()));
+        #
+        #    this.constructType( Types::Date);
+        #    sysList.Add( 01\01\2010);
+        #    sysList.Add( 01\01\2011);
+        #    this.assertEquals( 01\01\2010, any2date(sysList.MinValue()));
         #
         #    this.constructType( Types::Integer);
         #    this.parmExceptionExpected( true, "Коллекция не содержит элементов!");
-        #    sysList.Min();
+        #    sysList.MinValue();
         #}
       ENDSOURCE
       SOURCE #testRemove
@@ -1611,6 +1829,28 @@ Formatversion: 1
         #    this.assertEquals( 2, sysList.Count());
         #    sysList.Remove(20);
         #    this.assertEquals( 1, sysList.Count());
+        #}
+      ENDSOURCE
+      SOURCE #testSum
+        #void testSum()
+        #{
+        #;
+        #    this.constructType( Types::Integer);
+        #    sysList.Add(10);
+        #    sysList.Add(20);
+        #    this.assertEquals( 30, any2int(sysList.Sum()));
+        #
+        #    this.constructType( Types::Integer);
+        #    sysList.Add(-10);
+        #    sysList.Add(-20);
+        #    this.assertEquals( -30, any2int(sysList.Sum()));
+        #
+        #    this.constructType( Types::Integer);
+        #    this.assertEquals( 0, any2int(sysList.Sum()));
+        #
+        #    this.constructType( Types::String);
+        #    this.parmExceptionExpected( true, "Функцию SysList.Sum можно вызывать только для числовых коллекций! Обратитесь к разработчикам.");
+        #    sysList.Sum();
         #}
       ENDSOURCE
       SOURCE #testUnion
@@ -1647,7 +1887,7 @@ Formatversion: 1
     PROPERTIES
       Name                #SysListCLRTest
       Extends             #SysTestCase
-      RunOn               #Called from
+      RunOn               #Server
     ENDPROPERTIES
     
     METHODS
@@ -1878,42 +2118,62 @@ Formatversion: 1
         #    this.assertEquals( itemTypeName, sysList.itemTypeName());
         #}
       ENDSOURCE
-      SOURCE #testMax
-        #void testMax()
+      SOURCE #testMaxValue
+        #void testMaxValue()
         #{
         #;
         #    this.constructType( Types::Integer);
         #    sysList.Add(10);
         #    sysList.Add(20);
-        #    this.assertEquals( 20, any2int(sysList.Max()));
+        #    this.assertEquals( 20, any2int(sysList.MaxValue()));
         #
         #    this.constructType( Types::Integer);
         #    sysList.Add(-10);
         #    sysList.Add(-20);
-        #    this.assertEquals( -10, any2int(sysList.Max()));
+        #    this.assertEquals( -10, any2int(sysList.MaxValue()));
+        #
+        #    this.constructType( Types::String);
+        #    sysList.Add("abc");
+        #    sysList.Add("ab");
+        #    this.assertEquals( "abc", any2str(sysList.MaxValue()));
+        #
+        #    this.constructType( Types::Date);
+        #    sysList.Add(01\01\2010);
+        #    sysList.Add(01\01\2011);
+        #    this.assertEquals( 01\01\2011, any2date(sysList.MaxValue()));
         #
         #    this.constructType( Types::Integer);
         #    this.parmExceptionExpected( true, "Коллекция не содержит элементов!");
-        #    sysList.Max();
+        #    sysList.MaxValue();
         #}
       ENDSOURCE
-      SOURCE #testMin
-        #void testMin()
+      SOURCE #testMinValue
+        #void testMinValue()
         #{
         #;
         #    this.constructType( Types::Integer);
         #    sysList.Add(10);
         #    sysList.Add(20);
-        #    this.assertEquals( 10, any2int(sysList.Min()));
+        #    this.assertEquals( 10, any2int(sysList.MinValue()));
         #
         #    this.constructType( Types::Integer);
         #    sysList.Add(-10);
         #    sysList.Add(-20);
-        #    this.assertEquals( -20, any2int(sysList.Min()));
+        #    this.assertEquals( -20, any2int(sysList.MinValue()));
+        #
+        #    this.constructType( Types::String);
+        #    sysList.Add("abc");
+        #    sysList.Add("ab");
+        #    this.assertEquals( "ab", any2str(sysList.MinValue()));
+        #
+        #    this.constructType( Types::Date);
+        #    sysList.Add(01\01\2010);
+        #    sysList.Add(01\01\2011);
+        #    this.assertEquals( 01\01\2010, any2date(sysList.MinValue()));
         #
         #    this.constructType( Types::Integer);
         #    this.parmExceptionExpected( true, "Коллекция не содержит элементов!");
-        #    sysList.Min();
+        #    sysList.MinValue();
         #}
       ENDSOURCE
       SOURCE #testRemove
@@ -1930,6 +2190,28 @@ Formatversion: 1
         #    this.assertEquals( 3, sysList.Count());
         #    sysList.Remove(20);
         #    this.assertEquals( 2, sysList.Count());
+        #}
+      ENDSOURCE
+      SOURCE #testSum
+        #void testSum()
+        #{
+        #;
+        #    this.constructType( Types::Integer);
+        #    sysList.Add(10);
+        #    sysList.Add(20);
+        #    this.assertEquals( 30, any2int(sysList.Sum()));
+        #
+        #    this.constructType( Types::Integer);
+        #    sysList.Add(-10);
+        #    sysList.Add(-20);
+        #    this.assertEquals( -30, any2int(sysList.Sum()));
+        #
+        #    this.constructType( Types::Integer);
+        #    this.assertEquals( 0, any2int(sysList.Sum()));
+        #
+        #    this.constructType( Types::String);
+        #    this.parmExceptionExpected( true, "Функцию SysICollectionCLR.Sum можно вызывать только для числовых коллекций! Обратитесь к разработчикам.");
+        #    sysList.Sum();
         #}
       ENDSOURCE
       SOURCE #testUnion

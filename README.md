@@ -12,6 +12,7 @@
 * `Concat(ICollection collection)`
 * `Min`
 * `Max`
+* `Sum`
 
 Отнаследовать от :
 * `Enumerable`
