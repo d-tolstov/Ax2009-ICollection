@@ -110,6 +110,11 @@ Formatversion: 1
         #{
         #}
       ENDSOURCE
+      SOURCE #Json
+        #str Json()
+        #{
+        #}
+      ENDSOURCE
       SOURCE #MaxValue
         #/// <summary>
         #/// Максимальное значение в коллекции
@@ -252,6 +257,69 @@ Formatversion: 1
         #    return ret;
         #}
       ENDSOURCE
+      SOURCE #objectIsEnumerable
+        #static boolean objectIsEnumerable(
+        #    anytype object
+        #)
+        #{
+        #    boolean         ret;
+        #    SysDictClass    sysDictClass;
+        #;
+        #    switch (typeof(object))
+        #    {
+        #        case Types::Class:
+        #            sysDictClass    = new SysDictClass(classidget(object));
+        #            ret             = sysDictClass.isImplementing(classnum(Enumerable));
+        #            break;
+        #        default:
+        #            break;
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #objectIsIDictionary
+        #static boolean objectIsIDictionary(
+        #    anytype object
+        #)
+        #{
+        #    boolean         ret;
+        #    SysDictClass    sysDictClass;
+        #;
+        #    switch (typeof(object))
+        #    {
+        #        case Types::Class:
+        #            sysDictClass    = new SysDictClass(classidget(object));
+        #            ret             = sysDictClass.isImplementing(classnum(IDictionary));
+        #            break;
+        #        default:
+        #            break;
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #objectIsIStruct
+        #static boolean objectIsIStruct(
+        #    anytype object
+        #)
+        #{
+        #    boolean         ret;
+        #    SysDictClass    sysDictClass;
+        #;
+        #    switch (typeof(object))
+        #    {
+        #        case Types::Class:
+        #            sysDictClass    = new SysDictClass(classidget(object));
+        #            ret             = sysDictClass.isImplementing(classnum(IStruct));
+        #            break;
+        #        default:
+        #            break;
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
     ENDMETHODS
   ENDCLASS
 
@@ -351,7 +419,7 @@ Formatversion: 1
         #}
       ENDSOURCE
       SOURCE #json
-        #str json()
+        #str Json()
         #{
         #    return SysJSONConvert::construct().SerializeObject( this.set());
         #}
@@ -572,7 +640,7 @@ Formatversion: 1
         #}
       ENDSOURCE
       SOURCE #json
-        #str json()
+        #str Json()
         #{
         #    return SysJSONConvert::construct().SerializeObject( this.list());
         #}
@@ -736,6 +804,24 @@ Formatversion: 1
     
     METHODS
       Version: 3
+      SOURCE #Add
+        #SysICollectionCLR Add(anytype item)
+        #{
+        #    InteropPermission   perm = new InteropPermission(InteropKind::ClrInterop);
+        #;
+        #    perm.assert();
+        #
+        #    SysCLRReflection::invokeMethod(
+        #        collection
+        #      , "Add"
+        #      , SysCLRReflection::getArray( this.getObjectForAnyType(item))
+        #    );
+        #
+        #    CodeAccessPermission::revertAssert();
+        #
+        #    return this;
+        #}
+      ENDSOURCE
       SOURCE #assertCollectionIsNumber
         #protected void assertCollectionIsNumber(
         #    str     _funcname
@@ -755,19 +841,6 @@ Formatversion: 1
         #              , _funcname
         #              )
         #    );
-        #}
-      ENDSOURCE
-      SOURCE #Add
-        #SysICollectionCLR Add(anytype item)
-        #{
-        #;
-        #    SysCLRReflection::invokeMethod(
-        #        collection
-        #      , "Add"
-        #      , SysCLRReflection::getArray( this.getObjectForAnyType(item))
-        #    );
-        #
-        #    return this;
         #}
       ENDSOURCE
       SOURCE #classDeclaration
@@ -829,6 +902,8 @@ Formatversion: 1
         #    SysICollectionCLR   ret;
         #    System.Object       unionResult;
         #;
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
         #    unionResult    = SysCLRReflection::invokeStaticGenericType(
         #        SysICollectionCLR::SystemLinqEnumerableType()
         #      , "Concat"
@@ -872,6 +947,8 @@ Formatversion: 1
         #{
         #    int ret;
         #;
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
         #    ret = SysCLRReflection::getPropertyValue(
         #        collection
         #      , "Count"
@@ -887,6 +964,8 @@ Formatversion: 1
         #    Enumerator          enumerator;
         #    System.Object       exceptResult;
         #;
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
         #    exceptResult    = SysCLRReflection::invokeStaticGenericType(
         #        SysICollectionCLR::SystemLinqEnumerableType()
         #      , "Except"
@@ -928,9 +1007,13 @@ Formatversion: 1
         #}
       ENDSOURCE
       SOURCE #GetEnumerator
-        #ISysEnumerator GetEnumerator()
+        #Enumerator GetEnumerator()
         #{
-        #    return SysEnumerator::newFromSystemCollection( collection);
+        #    ISysEnumerator  ret;
+        #;
+        #    ret = SysEnumerator_ICollection::construct( collection);
+        #
+        #    return ret;
         #}
       ENDSOURCE
       SOURCE #getItemType
@@ -967,7 +1050,11 @@ Formatversion: 1
         #    System.Object       clrObject;
         #    SysICollectionCLR   collectionCLR;
         #    SysIDictionaryCLR   dictCLR;
+        #    SysList             sysList;
+        #    SysSet              sysSet;
         #    ClassId             classId;
+        #    SysDictClass        sysDictClass;
+        #    anytype             struct;
         #;
         #    if ( typeof(item) == Types::Class)
         #    {
@@ -976,6 +1063,23 @@ Formatversion: 1
         #        {
         #            case classnum(CLRObject):
         #                clrObject   = item;
+        #                break;
+        #            case classnum(SysList):
+        #                sysList     = item;
+        #                clrObject   = SysListCLR::constructFromList( sysList.list()).collection();
+        #                break;
+        #            case classnum(List):
+        #                clrObject   = SysListCLR::constructFromList( item).collection();
+        #                break;
+        #            case classnum(SysSet):
+        #                sysSet      = item;
+        #                clrObject   = SysListCLR::constructFromSet( sysSet.set()).collection();
+        #                break;
+        #            case classnum(Set):
+        #                clrObject   = SysListCLR::constructFromSet( item).collection();
+        #                break;
+        #            case classnum(Struct):
+        #                clrObject   = SysStructCLR::constructFromStruct( item).dictionary();
         #                break;
         #            default:
         #                if ( SysDictClass::isEqualOrSuperclass( classId, classnum(SysICollectionCLR)))
@@ -991,9 +1095,18 @@ Formatversion: 1
         #                }
         #                else
         #                {
-        #                    new InteropPermission(InteropKind::ClrInterop).assert();
+        #                    //new InteropPermission(InteropKind::ClrInterop).assert();
         #
-        #                    clrObject       = CLRInterop::getObjectForAnyType( item);
+        #                    sysDictClass    = new SysDictClass(classId);
+        #                    if ( sysDictClass.hasObjectMethod("struct"))
+        #                    {
+        #                        struct      = sysDictClass.callObject( "struct", item);
+        #                        clrObject   = this.getObjectForAnyType( struct);
+        #                    }
+        #                    else
+        #                    {
+        #                        clrObject   = CLRInterop::getObjectForAnyType( item);
+        #                    }
         #                }
         #                break;
         #        }
@@ -1001,13 +1114,13 @@ Formatversion: 1
         #    else
         #    if ( typeof(item) == Types::Enum)
         #    {
-        #        new InteropPermission(InteropKind::ClrInterop).assert();
+        #        //new InteropPermission(InteropKind::ClrInterop).assert();
         #
         #        clrObject   = CLRInterop::getObjectForAnyType( enum2int(item));
         #    }
         #    else
         #    {
-        #        new InteropPermission(InteropKind::ClrInterop).assert();
+        #        //new InteropPermission(InteropKind::ClrInterop).assert();
         #
         #        clrObject   = CLRInterop::getObjectForAnyType( item);
         #    }
@@ -1040,9 +1153,9 @@ Formatversion: 1
         #}
       ENDSOURCE
       SOURCE #json
-        #str json()
+        #str Json()
         #{
-        #    return SysJSONConvert::construct().SerializeCLRObject( this.collection());
+        #    return SysJSONConvert::construct().SerializeObject( this.collection());
         #}
       ENDSOURCE
       SOURCE #MaxValue
@@ -1054,6 +1167,8 @@ Formatversion: 1
         #    if ( !this.Count())
         #        throw Error("Коллекция не содержит элементов!");
         #
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
         #    retCLR = SysCLRReflection::invokeStaticGenericType(
         #        SysICollectionCLR::SystemLinqEnumerableType()
         #      , "Max"
@@ -1061,8 +1176,6 @@ Formatversion: 1
         #      , SysCLRReflection::getArray( this.collection())
         #      , true
         #    );
-        #
-        #    new InteropPermission(InteropKind::ClrInterop).assert();
         #
         #    ret = CLRInterop::getAnyTypeForObject(retCLR);
         #
@@ -1078,6 +1191,8 @@ Formatversion: 1
         #    if ( !this.Count())
         #        throw Error("Коллекция не содержит элементов!");
         #
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
         #    retCLR = SysCLRReflection::invokeStaticGenericType(
         #        SysICollectionCLR::SystemLinqEnumerableType()
         #      , "Min"
@@ -1085,8 +1200,6 @@ Formatversion: 1
         #      , SysCLRReflection::getArray( this.collection())
         #      , true
         #    );
-        #
-        #    new InteropPermission(InteropKind::ClrInterop).assert();
         #
         #    ret = CLRInterop::getAnyTypeForObject(retCLR);
         #
@@ -1135,6 +1248,8 @@ Formatversion: 1
         #SysICollectionCLR Remove(anytype item)
         #{
         #;
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
         #    SysCLRReflection::invokeMethod(
         #        collection
         #      , "Remove"
@@ -1152,6 +1267,8 @@ Formatversion: 1
         #;
         #    this.assertCollectionIsNumber( funcname());
         #
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
         #    retCLR = SysCLRReflection::invokeStaticGenericType(
         #        SysICollectionCLR::SystemLinqEnumerableType()
         #      , "Sum"
@@ -1159,8 +1276,6 @@ Formatversion: 1
         #      , SysCLRReflection::getArray( this.collection())
         #      , true
         #    );
-        #
-        #    new InteropPermission(InteropKind::ClrInterop).assert();
         #
         #    ret = CLRInterop::getAnyTypeForObject(retCLR);
         #
@@ -1173,6 +1288,8 @@ Formatversion: 1
         #    SysICollectionCLR   ret;
         #    System.Object       unionResult;
         #;
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
         #    unionResult    = SysCLRReflection::invokeStaticGenericType(
         #        SysICollectionCLR::SystemLinqEnumerableType()
         #      , "Union"
@@ -1273,6 +1390,14 @@ Formatversion: 1
         #    return SysCLRType::newFromTypeName("System.Linq.Enumerable, System.Linq, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a").parmClrType();
         #}
       ENDSOURCE
+      SOURCE #typeNameIsICollection
+        #static boolean typeNameIsICollection( str _typeName)
+        #{
+        #    return match( "System.Collections.Generic.List`1\\[.+\\]", _typeName)
+        #        || match( "System.Collections.Generic.SortedSet`1\\[.+\\]", _typeName)
+        #        || _typeName == "Newtonsoft.Json.Linq.JArray" ;
+        #}
+      ENDSOURCE
     ENDMETHODS
   ENDCLASS
 
@@ -1313,6 +1438,56 @@ Formatversion: 1
         #{
         #}
       ENDSOURCE
+      SOURCE #constructFromEnumerable
+        #static SysListCLR constructFromEnumerable(
+        #    Enumerable _enumerable
+        #)
+        #{
+        #    SysListCLR  ret;
+        #    Enumerator  enumerator;
+        #;
+        #    ret         = SysListCLR::constructType( Types::Class);
+        #    enumerator  = _enumerable.getEnumerator();
+        #    while (enumerator.moveNext())
+        #    {
+        #        ret.Add( enumerator.current());
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #constructFromList
+        #static SysListCLR constructFromList( List _list)
+        #{
+        #    SysListCLR  ret;
+        #    Enumerator  enumerator;
+        #;
+        #    ret         = SysListCLR::constructType( _list.typeId());
+        #    enumerator  = _list.getEnumerator();
+        #    while (enumerator.moveNext())
+        #    {
+        #        ret.Add( enumerator.current());
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #constructFromSet
+        #static SysListCLR constructFromSet( Set _set)
+        #{
+        #    SysListCLR  ret;
+        #    Enumerator  enumerator;
+        #;
+        #    ret         = SysListCLR::constructType( _set.typeId());
+        #    enumerator  = _set.getEnumerator();
+        #    while (enumerator.moveNext())
+        #    {
+        #        ret.Add( enumerator.current());
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
       SOURCE #constructList
         #static SysListCLR constructList( System.Object _list)
         #{
@@ -1344,7 +1519,244 @@ Formatversion: 1
         #    str _itemTypeName = SysICollectionCLR::getTypeNameForTypes(Types::AnyType)
         #)
         #{
-        #    return SysICollectionCLR::constructCollectionTypeName( strfmt( "System.Collections.Generic.List`1[%1]", _itemTypeName));
+        #    System.Type         collectionType;
+        #    System.Object       collection;
+        #    str                 collectionTypeName;
+        #;
+        #    collectionTypeName  =
+        #        strfmt( "System.Collections.Generic.List`1[%1]"
+        #              , _itemTypeName
+        #              );
+        #
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
+        #    collectionType    = SysCLRType::newFromTypeName( collectionTypeName).parmClrType();
+        #    collection        = System.Activator::CreateInstance( collectionType);
+        #
+        #    return SysListCLR::constructList( collection);
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: SysSetCLR выгружен
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #SysSetCLR
+    PROPERTIES
+      Name                #SysSetCLR
+      Extends             #SysICollectionCLR
+      RunOn               #Called from
+    ENDPROPERTIES
+    
+    METHODS
+      Version: 3
+      SOURCE #classDeclaration
+        #/// <summary>
+        #/// Обертка для класса System.Collections.Generic.SortedSet<T> , реализующая интерфейс ICollection
+        #///
+        #/// Варианты инициализации :
+        #///    - на основе ранее созданного System.Collections.Generic.SortedSet
+        #///         SysSetCLR::constructSet( set)
+        #///    - новый SortedSet с указанием названия типа
+        #///         SysSetCLR::constructTypeName( "System.String")
+        #///    - новый SortedSet с указанием типа
+        #///         SysSetCLR::constructType( Types::String))
+        #///    - новый SortedSet с указанием типа CLR
+        #///         SysSetCLR::constructTypeCLR( System.Type::GetType("System.String"))
+        #///
+        #/// </summary>
+        #/// <remarks>
+        #///
+        #/// </remarks>
+        #class SysSetCLR extends SysICollectionCLR
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #getItemType
+        #protected System.Type getItemType()
+        #{
+        #    System.Object                   object = this.collection();
+        #    System.Type                     typeObject;
+        #    System.Reflection.PropertyInfo  propertyObject;
+        #    System.Type                     itemTypeObject;
+        #;
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
+        #    typeObject      = object.GetType();
+        #    propertyObject  = typeObject.GetProperty("Min");
+        #    itemTypeObject  = propertyObject.get_PropertyType();
+        #    return itemTypeObject;
+        #}
+      ENDSOURCE
+      SOURCE #constructSet
+        #static SysSetCLR constructSet( System.Object _set)
+        #{
+        #    return new SysSetCLR(_set);
+        #}
+      ENDSOURCE
+      SOURCE #constructType
+        #static SysSetCLR constructType(
+        #    Types           _type       = Types::AnyType
+        #)
+        #{
+        #    return SysSetCLR::constructTypeName(
+        #        SysICollectionCLR::getTypeNameForTypes( _type)
+        #    );
+        #}
+      ENDSOURCE
+      SOURCE #constructTypeCLR
+        #static SysSetCLR constructTypeCLR(System.Type _type)
+        #{
+        #;
+        #    if ( CLRInterop::isNull(_type))
+        #        throw Error(strfmt("В функцию %1 не передан параметр _type!", funcname()));
+        #
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
+        #    return SysSetCLR::constructTypeName( _type.ToString());
+        #}
+      ENDSOURCE
+      SOURCE #constructTypeName
+        #static SysSetCLR constructTypeName(
+        #    str             _itemTypeName   = SysICollectionCLR::getTypeNameForTypes(Types::AnyType)
+        #
+        #)
+        #{
+        #    System.Type         collectionType;
+        #    System.Object       collection;
+        #    str                 collectionTypeName;
+        #    str                 errorTxt;
+        #;
+        #    collectionTypeName  =
+        #        strfmt( "System.Collections.Generic.SortedSet`1[%1], System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
+        #              , _itemTypeName
+        #              );
+        #
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
+        #    try
+        #    {
+        #        collectionType    = SysCLRType::newFromTypeName( collectionTypeName).parmClrType();
+        #        collection        = System.Activator::CreateInstance( collectionType);
+        #    }
+        #    catch
+        #    {
+        #        errorTxt    = AifUtil::getClrErrorMessage();
+        #        throw Error(errorTxt);
+        #    }
+        #
+        #    return SysSetCLR::constructSet( collection);
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: SysEnumerator_ICollection выгружен
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #SysEnumerator_ICollection
+    PROPERTIES
+      Name                #SysEnumerator_ICollection
+      Extends             #SysEnumerator_SystemCollection
+      RunOn               #Called from
+    ENDPROPERTIES
+    
+    METHODS
+      Version: 3
+      SOURCE #classDeclaration
+        #class SysEnumerator_ICollection extends SysEnumerator_SystemCollection
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #current
+        #public anytype current()
+        #{
+        #    return this.getAnytypeForObject( this.get_Current());
+        #}
+      ENDSOURCE
+      SOURCE #get_Current
+        #public System.Object get_Current()
+        #{
+        #    System.Object ret;
+        #;
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
+        #    ret = currentProperty.GetValue(this.baseEnumerator(), nil);
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #getAnytypeForObject
+        #protected anytype getAnytypeForObject(
+        #    System.Object object
+        #)
+        #{
+        #    anytype                         ret;
+        #    System.Type                     objectType;
+        #    str                             objectTypeName;
+        #    System.Type[]                   interfaces;
+        #    System.Type                     inter;
+        #    int                             i;
+        #    Newtonsoft.Json.Linq.JValue     jValue;
+        #    System.Byte[]                   byteArray;
+        #    str                             base64String;
+        #;
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
+        #    objectType      = object.GetType();
+        #    objectTypeName  = objectType.ToString();
+        #
+        #    setprefix(objectTypeName);
+        #
+        #    if ( objectTypeName == "Newtonsoft.Json.Linq.JValue")
+        #    {
+        #        jValue  = object;
+        #        ret     = this.getAnytypeForObject(jValue.get_Value());
+        #    }
+        #    else
+        #    if ( SysStructCLR::typeNameIsStruct( objectTypeName))
+        #    {
+        #        ret = SysStructCLR::constructDictionary( object);
+        #    }
+        #    else
+        #    if ( SysDictionaryCLR::typeNameIsDictionary( objectTypeName))
+        #    {
+        #        ret = SysDictionaryCLR::constructDictionary( object);
+        #    }
+        #    else
+        #    if ( SysICollectionCLR::typeNameIsICollection( objectTypeName))
+        #    {
+        #        ret = SysICollectionCLR::constructCollection( object);
+        #    }
+        #    else
+        #    // Массивы байтов извлекаем так чтобы потом их использовать для BinData.getData
+        #    if ( objectTypeName == "System.Byte[]")
+        #    {
+        #        byteArray       = object;
+        #        base64String    = System.Convert::ToBase64String( byteArray);
+        #        ret             = BinData::loadFromBase64( base64String);
+        #    }
+        #    else
+        #    {
+        #        ret = CLRInterop::getAnyTypeForObject(object);
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #construct
+        #public static SysEnumerator_ICollection construct(System.Collections.IEnumerable base = null)
+        #{
+        #    SysEnumerator_ICollection enumerator = new SysEnumerator_ICollection(base);
+        #
+        #    return enumerator;
         #}
       ENDSOURCE
     ENDMETHODS
@@ -1365,28 +1777,6 @@ Formatversion: 1
     
     METHODS
       Version: 3
-      SOURCE #testSum
-        #void testSum()
-        #{
-        #;
-        #    this.constructType( Types::Integer);
-        #    sysSet.Add(10);
-        #    sysSet.Add(20);
-        #    this.assertEquals( 30, any2int(sysSet.Sum()));
-        #
-        #    this.constructType( Types::Integer);
-        #    sysSet.Add(-10);
-        #    sysSet.Add(-20);
-        #    this.assertEquals( -30, any2int(sysSet.Sum()));
-        #
-        #    this.constructType( Types::Integer);
-        #    this.assertEquals( 0, any2int(sysSet.Sum()));
-        #
-        #    this.constructType( Types::String);
-        #    this.parmExceptionExpected( true, "Функцию SysSet.Sum можно вызывать только для числовых коллекций! Обратитесь к разработчикам.");
-        #    sysSet.Sum();
-        #}
-      ENDSOURCE
       SOURCE #classDeclaration
         #class SysSetTest extends SysTestCase
         #{
@@ -1589,6 +1979,28 @@ Formatversion: 1
         #    this.assertEquals( 1, sysSet.Count());
         #}
       ENDSOURCE
+      SOURCE #testSum
+        #void testSum()
+        #{
+        #;
+        #    this.constructType( Types::Integer);
+        #    sysSet.Add(10);
+        #    sysSet.Add(20);
+        #    this.assertEquals( 30, any2int(sysSet.Sum()));
+        #
+        #    this.constructType( Types::Integer);
+        #    sysSet.Add(-10);
+        #    sysSet.Add(-20);
+        #    this.assertEquals( -30, any2int(sysSet.Sum()));
+        #
+        #    this.constructType( Types::Integer);
+        #    this.assertEquals( 0, any2int(sysSet.Sum()));
+        #
+        #    this.constructType( Types::String);
+        #    this.parmExceptionExpected( true, "Функцию SysSet.Sum можно вызывать только для числовых коллекций! Обратитесь к разработчикам.");
+        #    sysSet.Sum();
+        #}
+      ENDSOURCE
       SOURCE #testUnion
         #void testUnion()
         #{
@@ -1607,6 +2019,257 @@ Formatversion: 1
         #    ;
         #    this.assertNotNull(sysSet);
         #    this.assertEquals( 6, sysSet.Count());
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: SysSetCLRTest выгружен
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #SysSetCLRTest
+    PROPERTIES
+      Name                #SysSetCLRTest
+      Extends             #SysTestCase
+      RunOn               #Server
+    ENDPROPERTIES
+    
+    METHODS
+      Version: 3
+      SOURCE #classDeclaration
+        #class SysSetCLRTest extends SysTestCase
+        #{
+        #    SysSetCLR     sysSet;
+        #}
+      ENDSOURCE
+      SOURCE #constructType
+        #protected SysSetCLR constructType( Types _type)
+        #{
+        #;
+        #    sysSet  = SysSetCLR::constructType( _type);
+        #    return sysSet;
+        #}
+      ENDSOURCE
+      SOURCE #testAdd
+        #void testAdd()
+        #{
+        #;
+        #    this.constructType( Types::Integer);
+        #    sysSet.Add(10);
+        #    this.assertEquals( 1, sysSet.Count());
+        #    sysSet.Add(20);
+        #    this.assertEquals( 2, sysSet.Count());
+        #}
+      ENDSOURCE
+      SOURCE #testConcat
+        #void testConcat()
+        #{
+        #    ICollection sysList;
+        #;
+        #    sysList = this.constructType(Types::String)
+        #        .Add("01")
+        #        .Add("02")
+        #        .Add("03")
+        #        .Add("04")
+        #        .Add("05")
+        #        .Concat( SysSetCLR::constructType(Types::String)
+        #            .Add("02")
+        #            .Add("03")
+        #            .Add("06")
+        #        )
+        #    ;
+        #    this.assertNotNull(sysList);
+        #    this.assertEquals( 8, sysList.Count());
+        #}
+      ENDSOURCE
+      SOURCE #testConstructType
+        #void testConstructType()
+        #{
+        #;
+        #    this.constructType( Types::String);
+        #    this.assertNotNull(sysSet);
+        #}
+      ENDSOURCE
+      SOURCE #testContains
+        #void testContains()
+        #{
+        #;
+        #    this.constructType( Types::Integer);
+        #    sysSet.Add(10);
+        #    sysSet.Add(20);
+        #
+        #    this.assertTrue( sysSet.Contains(20));
+        #    this.assertFalse( sysSet.Contains(30));
+        #}
+      ENDSOURCE
+      SOURCE #testCount
+        #void testCount()
+        #{
+        #;
+        #    this.constructType( Types::Integer);
+        #    this.assertEquals( 0, sysSet.Count());
+        #
+        #    sysSet.Add(10);
+        #    this.assertEquals( 1, sysSet.Count());
+        #}
+      ENDSOURCE
+      SOURCE #testExcept
+        #void testExcept()
+        #{
+        #    ICollection sysList;
+        #;
+        #    sysList = this.constructType(Types::String)
+        #        .Add("01")
+        #        .Add("02")
+        #        .Add("03")
+        #        .Add("04")
+        #        .Add("05")
+        #        .Except( SysSetCLR::constructType(Types::String)
+        #            .Add("02")
+        #            .Add("03")
+        #        )
+        #    ;
+        #    this.assertNotNull(sysList);
+        #    this.assertEquals( 3, sysList.Count());
+        #}
+      ENDSOURCE
+      SOURCE #testGetEnumerator
+        #void testGetEnumerator()
+        #{
+        #    Enumerator  enumerator;
+        #    int         i;
+        #;
+        #    this.constructType(Types::Integer);
+        #    sysSet.Add(10);
+        #    sysSet.Add(20);
+        #
+        #    enumerator  = sysSet.GetEnumerator();
+        #    this.assertNotNull( enumerator);
+        #
+        #    while (enumerator.moveNext())
+        #    {
+        #        i++;
+        #    }
+        #    this.assertEquals( 2, i);
+        #}
+      ENDSOURCE
+      SOURCE #testMaxValue
+        #void testMaxValue()
+        #{
+        #;
+        #    this.constructType( Types::Integer);
+        #    sysSet.Add(10);
+        #    sysSet.Add(20);
+        #    this.assertEquals( 20, any2int(sysSet.MaxValue()));
+        #
+        #    this.constructType( Types::Integer);
+        #    sysSet.Add(-10);
+        #    sysSet.Add(-20);
+        #    this.assertEquals( -10, any2int(sysSet.MaxValue()));
+        #
+        #    this.constructType( Types::String);
+        #    sysSet.Add("abc");
+        #    sysSet.Add("ab");
+        #    this.assertEquals( "abc", any2str(sysSet.MaxValue()));
+        #
+        #    this.constructType( Types::Date);
+        #    sysSet.Add( 01\01\2010);
+        #    sysSet.Add( 01\01\2011);
+        #    this.assertEquals( 01\01\2011, any2date(sysSet.MaxValue()));
+        #
+        #    this.constructType( Types::Integer);
+        #    this.parmExceptionExpected( true, "Коллекция не содержит элементов!");
+        #    sysSet.MaxValue();
+        #}
+      ENDSOURCE
+      SOURCE #testMinValue
+        #void testMinValue()
+        #{
+        #;
+        #    this.constructType( Types::Integer);
+        #    sysSet.Add(10);
+        #    sysSet.Add(20);
+        #    this.assertEquals( 10, any2int(sysSet.MinValue()));
+        #
+        #    this.constructType( Types::Integer);
+        #    sysSet.Add(-10);
+        #    sysSet.Add(-20);
+        #    this.assertEquals( -20, any2int(sysSet.MinValue()));
+        #
+        #    this.constructType( Types::String);
+        #    sysSet.Add("abc");
+        #    sysSet.Add("ab");
+        #    this.assertEquals( "ab", any2str(sysSet.MinValue()));
+        #
+        #    this.constructType( Types::Date);
+        #    sysSet.Add( 01\01\2010);
+        #    sysSet.Add( 01\01\2011);
+        #    this.assertEquals( 01\01\2010, any2date(sysSet.MinValue()));
+        #
+        #    this.constructType( Types::Integer);
+        #    this.parmExceptionExpected( true, "Коллекция не содержит элементов!");
+        #    sysSet.MinValue();
+        #}
+      ENDSOURCE
+      SOURCE #testRemove
+        #void testRemove()
+        #{
+        #;
+        #    this.constructType(Types::Integer);
+        #    sysSet.Add(10);
+        #    this.assertEquals( 1, sysSet.Count());
+        #    sysSet.Add(20);
+        #    this.assertEquals( 2, sysSet.Count());
+        #    sysSet.Remove(30);
+        #    this.assertEquals( 2, sysSet.Count());
+        #    sysSet.Remove(20);
+        #    this.assertEquals( 1, sysSet.Count());
+        #}
+      ENDSOURCE
+      SOURCE #testSum
+        #void testSum()
+        #{
+        #;
+        #    this.constructType( Types::Integer);
+        #    sysSet.Add(10);
+        #    sysSet.Add(20);
+        #    this.assertEquals( 30, any2int(sysSet.Sum()));
+        #
+        #    this.constructType( Types::Integer);
+        #    sysSet.Add(-10);
+        #    sysSet.Add(-20);
+        #    this.assertEquals( -30, any2int(sysSet.Sum()));
+        #
+        #    this.constructType( Types::Integer);
+        #    this.assertEquals( 0, any2int(sysSet.Sum()));
+        #
+        #    this.constructType( Types::String);
+        #    this.parmExceptionExpected( true, "Функцию SysICollectionCLR.Sum можно вызывать только для числовых коллекций! Обратитесь к разработчикам.");
+        #    sysSet.Sum();
+        #}
+      ENDSOURCE
+      SOURCE #testUnion
+        #void testUnion()
+        #{
+        #    ICollection sysList;
+        #;
+        #    sysList = this.constructType(Types::String)
+        #        .Add("01")
+        #        .Add("02")
+        #        .Add("03")
+        #        .Add("04")
+        #        .Add("05")
+        #        .Union( SysSetCLR::constructType(Types::String)
+        #            .Add("02")
+        #            .Add("03")
+        #            .Add("06")
+        #        )
+        #    ;
+        #    this.assertNotNull(sysList);
+        #    this.assertEquals( 6, sysList.Count());
         #}
       ENDSOURCE
     ENDMETHODS
@@ -1899,10 +2562,11 @@ Formatversion: 1
         #}
       ENDSOURCE
       SOURCE #constructType
-        #protected void constructType( Types _type)
+        #protected SysListCLR constructType( Types _type)
         #{
         #;
         #    sysList  = SysListCLR::constructType( _type);
+        #    return sysList;
         #}
       ENDSOURCE
       SOURCE #constructTypeName
@@ -2050,9 +2714,10 @@ Formatversion: 1
         #void testContains()
         #{
         #;
-        #    this.constructTypeName("System.Int32");
-        #    sysList.Add(10);
-        #    sysList.Add(20);
+        #    this.constructType(Types::Integer)
+        #        .Add(10)
+        #        .Add(20)
+        #    ;
         #
         #    this.assertTrue( sysList.Contains(20));
         #    this.assertFalse( sysList.Contains(30));
@@ -2095,18 +2760,46 @@ Formatversion: 1
         #    Enumerator  enumerator;
         #    int         i;
         #;
-        #    this.constructTypeName("System.Int32");
+        #    this.constructType(Types::Integer);
         #    sysList.Add(10);
         #    sysList.Add(20);
         #
         #    enumerator  = sysList.GetEnumerator();
         #    this.assertNotNull( enumerator);
         #
+        #    i = 0;
         #    while (enumerator.moveNext())
         #    {
+        #        enumerator.current();
         #        i++;
         #    }
         #    this.assertEquals( 2, i);
+        #
+        #    this.constructType(Types::Class)
+        #        .Add( SysListCLR::constructType(Types::Integer)
+        #            .Add(11)
+        #            .Add(22)
+        #        )
+        #        .Add( SysListCLR::constructType(Types::String)
+        #            .Add("110")
+        #            .Add("220")
+        #        )
+        #        .Add( SysListCLR::constructType(Types::Guid)
+        #            .Add(newguid())
+        #            .Add(newguid())
+        #        )
+        #    ;
+        #
+        #    enumerator  = sysList.GetEnumerator();
+        #    this.assertNotNull( enumerator);
+        #
+        #    i = 0;
+        #    while (enumerator.moveNext())
+        #    {
+        #        enumerator.current();
+        #        i++;
+        #    }
+        #    this.assertEquals( 3, i);
         #}
       ENDSOURCE
       SOURCE #testItemTypeName
@@ -2214,6 +2907,17 @@ Formatversion: 1
         #    sysList.Sum();
         #}
       ENDSOURCE
+      SOURCE #testTypeNameIsCollection
+        #void testTypeNameIsCollection()
+        #{
+        #;
+        #    this.assertTrue(
+        #        SysICollectionCLR::typeNameIsICollection(
+        #            "System.Collections.Generic.List`1[System.Int32]"
+        #        )
+        #    );
+        #}
+      ENDSOURCE
       SOURCE #testUnion
         #void testUnion()
         #{
@@ -2302,6 +3006,20 @@ Formatversion: 1
         NODETYPE 329
         NAME #SysListCLR
       ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 45
+        UTILOBJECTID 41911
+        NODETYPE 329
+        NAME #SysSetCLR
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 45
+        UTILOBJECTID 41918
+        NODETYPE 329
+        NAME #SysEnumerator_ICollection
+      ENDNODE
       ENDGROUP
       
     GROUP #Test
@@ -2318,6 +3036,13 @@ Formatversion: 1
         UTILOBJECTID 41889
         NODETYPE 329
         NAME #SysSetTest
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 45
+        UTILOBJECTID 41912
+        NODETYPE 329
+        NAME #SysSetCLRTest
       ENDNODE
       BEGINNODE
         FILETYPE 0

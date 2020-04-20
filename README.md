@@ -28,3 +28,4 @@
 * [SysEnumerators](https://github.com/mazzy-ax/SysEnumerators)
 * [.Net Framework 4 Support](https://github.com/d-tolstov/Ax2009-NetFramework4-Support)
 * [SysCLRReflection](https://github.com/d-tolstov/Ax2009-SysCLRReflection)
+* [IDictionary](https://github.com/d-tolstov/Ax2009-IDictionary)
