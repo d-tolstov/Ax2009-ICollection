@@ -110,11 +110,6 @@ Formatversion: 1
         #{
         #}
       ENDSOURCE
-      SOURCE #Json
-        #str Json()
-        #{
-        #}
-      ENDSOURCE
       SOURCE #MaxValue
         #/// <summary>
         #/// Максимальное значение в коллекции
@@ -418,12 +413,6 @@ Formatversion: 1
         #    return set.getEnumerator();
         #}
       ENDSOURCE
-      SOURCE #json
-        #str Json()
-        #{
-        #    return SysJSONConvert::construct().SerializeObject( this.set());
-        #}
-      ENDSOURCE
       SOURCE #MaxValue
         #anytype MaxValue()
         #{
@@ -637,12 +626,6 @@ Formatversion: 1
         #ListEnumerator GetEnumerator()
         #{
         #    return list.getEnumerator();
-        #}
-      ENDSOURCE
-      SOURCE #json
-        #str Json()
-        #{
-        #    return SysJSONConvert::construct().SerializeObject( this.list());
         #}
       ENDSOURCE
       SOURCE #list
@@ -1152,12 +1135,6 @@ Formatversion: 1
         #    return itemTypeName;
         #}
       ENDSOURCE
-      SOURCE #json
-        #str Json()
-        #{
-        #    return SysJSONConvert::construct().SerializeObject( this.collection());
-        #}
-      ENDSOURCE
       SOURCE #MaxValue
         #anytype MaxValue()
         #{
@@ -1257,6 +1234,12 @@ Formatversion: 1
         #    );
         #
         #    return this;
+        #}
+      ENDSOURCE
+      SOURCE #struct
+        #anytype struct()
+        #{
+        #    return this.collection();
         #}
       ENDSOURCE
       SOURCE #Sum
