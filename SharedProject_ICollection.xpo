@@ -840,13 +840,38 @@ Formatversion: 1
         #/// </remarks>
         #class SysICollectionCLR implements ICollection
         #{
-        #    System.Collections.IEnumerable  collection;
+        #    System.Collections.ICollection  collection;
         #    // Тип коллекции
         #    System.Type                     collectionType;
         #    str                             collectionTypeName;
         #    // Тип элемента коллекции
         #    System.Type                     itemType;
         #    str                             itemTypeName;
+        #}
+      ENDSOURCE
+      SOURCE #classIdHasMethod
+        ##define.classIdHasMethodKey("classIdHasMethodKey")
+        #protected boolean classIdHasMethod(
+        #    int     _classId
+        #  , str     _methodName
+        #)
+        #{
+        #    SysGlobalCache  globalCache = appl.globalCache();
+        #    str             key;
+        #    boolean         ret;
+        #;
+        #    key = #classIdHasMethodKey + "_" + int2str(_classId) + "_" + _methodName;
+        #
+        #    if ( !globalCache.isSet("", key))
+        #    {
+        #        ret = new SysDictClass(_classId).hasObjectMethod(_methodName);
+        #
+        #        globalCache.set( "", key, ret);
+        #    }
+        #    else
+        #        ret = globalCache.get( "", key);
+        #
+        #    return ret;
         #}
       ENDSOURCE
       SOURCE #collection
@@ -932,10 +957,7 @@ Formatversion: 1
         #;
         #    new InteropPermission(InteropKind::ClrInterop).assert();
         #
-        #    ret = SysCLRReflection::getPropertyValue(
-        #        collection
-        #      , "Count"
-        #    );
+        #    ret = collection.get_Count();
         #
         #    return ret;
         #}
@@ -1031,15 +1053,30 @@ Formatversion: 1
         #protected System.Object getObjectForAnyType(anytype item)
         #{
         #    System.Object       clrObject;
-        #    SysICollectionCLR   collectionCLR;
-        #    SysIDictionaryCLR   dictCLR;
-        #    SysList             sysList;
-        #    SysSet              sysSet;
+        #    System.String       stringObject;
+        #    System.Int32        intObject;
         #    ClassId             classId;
         #    SysDictClass        sysDictClass;
-        #    anytype             struct;
+        #    Types               paramType;
+        #    BinData             binData;
         #;
-        #    if ( typeof(item) == Types::Class)
+        #    paramType    = typeof(item);
+        #
+        #    setprefix( strfmt("%1",paramType));
+        #
+        #    if ( paramType == Types::String)
+        #    {
+        #        stringObject    = item;
+        #        return stringObject;
+        #    }
+        #    else
+        #    if ( paramType == Types::Integer)
+        #    {
+        #        intObject    = item;
+        #        return intObject;
+        #    }
+        #    else
+        #    if ( paramType == Types::Class)
         #    {
         #        classId = classidget(item);
         #        switch ( classId)
@@ -1047,16 +1084,8 @@ Formatversion: 1
         #            case classnum(CLRObject):
         #                clrObject   = item;
         #                break;
-        #            case classnum(SysList):
-        #                sysList     = item;
-        #                clrObject   = SysListCLR::constructFromList( sysList.list()).collection();
-        #                break;
         #            case classnum(List):
         #                clrObject   = SysListCLR::constructFromList( item).collection();
-        #                break;
-        #            case classnum(SysSet):
-        #                sysSet      = item;
-        #                clrObject   = SysListCLR::constructFromSet( sysSet.set()).collection();
         #                break;
         #            case classnum(Set):
         #                clrObject   = SysListCLR::constructFromSet( item).collection();
@@ -1065,46 +1094,42 @@ Formatversion: 1
         #                clrObject   = SysStructCLR::constructFromStruct( item).dictionary();
         #                break;
         #            default:
-        #                if ( SysDictClass::isEqualOrSuperclass( classId, classnum(SysICollectionCLR)))
+        #                if ( this.classIdHasMethod( classId, "struct"))
         #                {
-        #                    collectionCLR   = item;
-        #                    clrObject       = collectionCLR.collection();
-        #                }
-        #                else
-        #                if ( SysDictClass::isEqualOrSuperclass( classId, classnum(SysIDictionaryCLR)))
-        #                {
-        #                    dictCLR     = item;
-        #                    clrObject   = dictCLR.dictionary();
+        #                    clrObject   = this.getObjectForAnyType( new DictClass(classId).callObject( "struct", item));
         #                }
         #                else
         #                {
-        #                    //new InteropPermission(InteropKind::ClrInterop).assert();
-        #
         #                    sysDictClass    = new SysDictClass(classId);
-        #                    if ( sysDictClass.hasObjectMethod("struct"))
+        #                    if ( sysDictClass.isImplementing(classnum(Enumerable)))
         #                    {
-        #                        struct      = sysDictClass.callObject( "struct", item);
-        #                        clrObject   = this.getObjectForAnyType( struct);
+        #                        clrObject   = SysListCLR::constructFromEnumerable( item).collection();
         #                    }
         #                    else
         #                    {
-        #                        clrObject   = CLRInterop::getObjectForAnyType( item);
+        #                        throw Error( strfmt( "Не определены правила преобразования объекта класса %1 в ClrObject. Обратитесь в AxaptaSupport.", sysDictClass.name()));
         #                    }
         #                }
         #                break;
         #        }
         #    }
         #    else
-        #    if ( typeof(item) == Types::Enum)
+        #    if ( paramType == Types::Enum)
         #    {
-        #        //new InteropPermission(InteropKind::ClrInterop).assert();
-        #
         #        clrObject   = CLRInterop::getObjectForAnyType( enum2int(item));
         #    }
         #    else
+        #    // Данные из binData.getData
+        #    if ( paramType == Types::Container
+        #      && conlen( item) == 1
+        #      && typeof(conpeek( item, 1)) == Types::BLOB )
         #    {
-        #        //new InteropPermission(InteropKind::ClrInterop).assert();
-        #
+        #        binData     = new BinData();
+        #        binData.setData( item);
+        #        clrObject   = System.Convert::FromBase64String( binData.base64Encode());
+        #    }
+        #    else
+        #    {
         #        clrObject   = CLRInterop::getObjectForAnyType( item);
         #    }
         #
@@ -1193,32 +1218,6 @@ Formatversion: 1
         #        throw Error(strfmt("В функцию %1 не передан параметр _collection!", funcname()));
         #
         #    collection = _collection;
-        #}
-      ENDSOURCE
-      SOURCE #params
-        #protected Array params(
-        #    System.Object _parameter1 = null
-        #  , System.Object _parameter2 = null
-        #  , System.Object _parameter3 = null
-        #)
-        #{
-        #    Array   params;
-        #;
-        #    params  = new Array(Types::Class);
-        #    if ( !prmisdefault(_parameter1))
-        #    {
-        #        params.value( 1, _parameter1);
-        #    }
-        #    if ( !prmisdefault(_parameter2))
-        #    {
-        #        params.value( 2, _parameter2);
-        #    }
-        #    if ( !prmisdefault(_parameter3))
-        #    {
-        #        params.value( 3, _parameter3);
-        #    }
-        #
-        #    return params;
         #}
       ENDSOURCE
       SOURCE #Remove
@@ -1399,6 +1398,20 @@ Formatversion: 1
     
     METHODS
       Version: 3
+      SOURCE #Add
+        #SysListCLR Add(
+        #    anytype item
+        #)
+        #{
+        #    System.Collections.IList    list = this.collection();
+        #;
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
+        #    list.Add( this.getObjectForAnyType(item));
+        #
+        #    return this;
+        #}
+      ENDSOURCE
       SOURCE #classDeclaration
         #/// <summary>
         #/// Обертка для класса System.Collections.Generic.List<T> , реализующая интерфейс ICollection
@@ -1419,6 +1432,36 @@ Formatversion: 1
         #/// </remarks>
         #class SysListCLR extends SysICollectionCLR
         #{
+        #}
+      ENDSOURCE
+      SOURCE #Contains
+        #boolean Contains(
+        #    anytype item
+        #)
+        #{
+        #    boolean                     ret;
+        #
+        #    System.Collections.IList    list = this.collection();
+        #;
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
+        #    ret = list.Contains( this.getObjectForAnyType(item));
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #Remove
+        #SysListCLR Remove(
+        #    anytype item
+        #)
+        #{
+        #    System.Collections.IList    list = this.collection();
+        #;
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
+        #    list.Remove( this.getObjectForAnyType(item));
+        #
+        #    return this;
         #}
       ENDSOURCE
       SOURCE #constructFromEnumerable
@@ -1517,6 +1560,12 @@ Formatversion: 1
         #    collection        = System.Activator::CreateInstance( collectionType);
         #
         #    return SysListCLR::constructList( collection);
+        #}
+      ENDSOURCE
+      SOURCE #typeNameIsList
+        #static boolean typeNameIsList( str _typeName)
+        #{
+        #    return match( "System.Collections.Generic.List`1\\[.+\\]", _typeName) ;
         #}
       ENDSOURCE
     ENDMETHODS
@@ -1702,6 +1751,11 @@ Formatversion: 1
         #    {
         #        jValue  = object;
         #        ret     = this.getAnytypeForObject(jValue.get_Value());
+        #    }
+        #    else
+        #    if ( SysHashtableCLR::typeNameIsHashtable( objectTypeName))
+        #    {
+        #        ret = SysHashtableCLR::constructHashtable( object);
         #    }
         #    else
         #    if ( SysStructCLR::typeNameIsStruct( objectTypeName))
