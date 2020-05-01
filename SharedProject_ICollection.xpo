@@ -215,6 +215,31 @@ Formatversion: 1
         #{
         #}
       ENDSOURCE
+      SOURCE #classIdHasMethod
+        ##define.classIdHasMethodKey("classIdHasMethodKey")
+        #static protected boolean classIdHasMethod(
+        #    int     _classId
+        #  , str     _methodName
+        #)
+        #{
+        #    SysGlobalCache  globalCache = appl.globalCache();
+        #    str             key;
+        #    boolean         ret;
+        #;
+        #    key = #classIdHasMethodKey + "_" + int2str(_classId) + "_" + _methodName;
+        #
+        #    if ( !globalCache.isSet("", key))
+        #    {
+        #        ret = new SysDictClass(_classId).hasObjectMethod(_methodName);
+        #
+        #        globalCache.set( "", key, ret);
+        #    }
+        #    else
+        #        ret = globalCache.get( "", key);
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
       SOURCE #construct
         #static ICollection construct( anytype source)
         #{
@@ -250,6 +275,104 @@ Formatversion: 1
         #    }
         #
         #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #getObjectForAnyType
+        #static System.Object getObjectForAnyType(anytype item)
+        #{
+        #    System.Object       clrObject;
+        #    System.String       stringObject;
+        #    System.Int32        intObject;
+        #    System.Boolean      boolObject;
+        #    ClassId             classId;
+        #    SysDictClass        sysDictClass;
+        #    Types               paramType;
+        #    BinData             binData;
+        #;
+        #    paramType    = typeof(item);
+        #
+        #    setprefix( strfmt("%1",paramType));
+        #
+        #    if ( paramType == Types::String)
+        #    {
+        #        stringObject    = item;
+        #        return stringObject;
+        #    }
+        #    else
+        #    if ( paramType == Types::Integer)
+        #    {
+        #        intObject    = item;
+        #        return intObject;
+        #    }
+        #    else
+        #    if ( paramType == Types::Class)
+        #    {
+        #        classId = classidget(item);
+        #        switch ( classId)
+        #        {
+        #            case classnum(CLRObject):
+        #                clrObject   = item;
+        #                break;
+        #            case classnum(List):
+        #                clrObject   = SysListCLR::constructFromList( item).collection();
+        #                break;
+        #            case classnum(Set):
+        #                clrObject   = SysListCLR::constructFromSet( item).collection();
+        #                break;
+        #            case classnum(Struct):
+        #                clrObject   = SysStructCLR::constructFromStruct( item).dictionary();
+        #                break;
+        #            default:
+        #                if ( ICollectionStatic::classIdHasMethod( classId, "struct"))
+        #                {
+        #                    clrObject   = ICollectionStatic::getObjectForAnyType( new DictClass(classId).callObject( "struct", item));
+        #                }
+        #                else
+        #                {
+        #                    sysDictClass    = new SysDictClass(classId);
+        #                    if ( sysDictClass.isImplementing(classnum(Enumerable)))
+        #                    {
+        #                        clrObject   = SysListCLR::constructFromEnumerable( item).collection();
+        #                    }
+        #                    else
+        #                    {
+        #                        throw Error( strfmt( "Не определены правила преобразования объекта класса %1 в ClrObject. Обратитесь в AxaptaSupport.", sysDictClass.name()));
+        #                    }
+        #                }
+        #                break;
+        #        }
+        #    }
+        #    else
+        #    if ( paramType == Types::Enum)
+        #    {
+        #        if ( enum2value(item) == 'false'
+        #          || enum2value(item) == 'true' )
+        #        {
+        #            boolObject  = item;
+        #            return boolObject;
+        #        }
+        #        else
+        #        {
+        #            intObject   = enum2int(item);
+        #            return intObject;
+        #        }
+        #    }
+        #    else
+        #    // Данные из binData.getData
+        #    if ( paramType == Types::Container
+        #      && conlen( item) == 1
+        #      && typeof(conpeek( item, 1)) == Types::BLOB )
+        #    {
+        #        binData     = new BinData();
+        #        binData.setData( item);
+        #        clrObject   = System.Convert::FromBase64String( binData.base64Encode());
+        #    }
+        #    else
+        #    {
+        #        clrObject   = CLRInterop::getObjectForAnyType( item);
+        #    }
+        #
+        #    return clrObject;
         #}
       ENDSOURCE
       SOURCE #objectIsEnumerable
@@ -849,31 +972,6 @@ Formatversion: 1
         #    str                             itemTypeName;
         #}
       ENDSOURCE
-      SOURCE #classIdHasMethod
-        ##define.classIdHasMethodKey("classIdHasMethodKey")
-        #protected boolean classIdHasMethod(
-        #    int     _classId
-        #  , str     _methodName
-        #)
-        #{
-        #    SysGlobalCache  globalCache = appl.globalCache();
-        #    str             key;
-        #    boolean         ret;
-        #;
-        #    key = #classIdHasMethodKey + "_" + int2str(_classId) + "_" + _methodName;
-        #
-        #    if ( !globalCache.isSet("", key))
-        #    {
-        #        ret = new SysDictClass(_classId).hasObjectMethod(_methodName);
-        #
-        #        globalCache.set( "", key, ret);
-        #    }
-        #    else
-        #        ret = globalCache.get( "", key);
-        #
-        #    return ret;
-        #}
-      ENDSOURCE
       SOURCE #collection
         #System.Object collection()
         #{
@@ -1052,88 +1150,7 @@ Formatversion: 1
       SOURCE #getObjectForAnyType
         #protected System.Object getObjectForAnyType(anytype item)
         #{
-        #    System.Object       clrObject;
-        #    System.String       stringObject;
-        #    System.Int32        intObject;
-        #    ClassId             classId;
-        #    SysDictClass        sysDictClass;
-        #    Types               paramType;
-        #    BinData             binData;
-        #;
-        #    paramType    = typeof(item);
-        #
-        #    setprefix( strfmt("%1",paramType));
-        #
-        #    if ( paramType == Types::String)
-        #    {
-        #        stringObject    = item;
-        #        return stringObject;
-        #    }
-        #    else
-        #    if ( paramType == Types::Integer)
-        #    {
-        #        intObject    = item;
-        #        return intObject;
-        #    }
-        #    else
-        #    if ( paramType == Types::Class)
-        #    {
-        #        classId = classidget(item);
-        #        switch ( classId)
-        #        {
-        #            case classnum(CLRObject):
-        #                clrObject   = item;
-        #                break;
-        #            case classnum(List):
-        #                clrObject   = SysListCLR::constructFromList( item).collection();
-        #                break;
-        #            case classnum(Set):
-        #                clrObject   = SysListCLR::constructFromSet( item).collection();
-        #                break;
-        #            case classnum(Struct):
-        #                clrObject   = SysStructCLR::constructFromStruct( item).dictionary();
-        #                break;
-        #            default:
-        #                if ( this.classIdHasMethod( classId, "struct"))
-        #                {
-        #                    clrObject   = this.getObjectForAnyType( new DictClass(classId).callObject( "struct", item));
-        #                }
-        #                else
-        #                {
-        #                    sysDictClass    = new SysDictClass(classId);
-        #                    if ( sysDictClass.isImplementing(classnum(Enumerable)))
-        #                    {
-        #                        clrObject   = SysListCLR::constructFromEnumerable( item).collection();
-        #                    }
-        #                    else
-        #                    {
-        #                        throw Error( strfmt( "Не определены правила преобразования объекта класса %1 в ClrObject. Обратитесь в AxaptaSupport.", sysDictClass.name()));
-        #                    }
-        #                }
-        #                break;
-        #        }
-        #    }
-        #    else
-        #    if ( paramType == Types::Enum)
-        #    {
-        #        clrObject   = CLRInterop::getObjectForAnyType( enum2int(item));
-        #    }
-        #    else
-        #    // Данные из binData.getData
-        #    if ( paramType == Types::Container
-        #      && conlen( item) == 1
-        #      && typeof(conpeek( item, 1)) == Types::BLOB )
-        #    {
-        #        binData     = new BinData();
-        #        binData.setData( item);
-        #        clrObject   = System.Convert::FromBase64String( binData.base64Encode());
-        #    }
-        #    else
-        #    {
-        #        clrObject   = CLRInterop::getObjectForAnyType( item);
-        #    }
-        #
-        #    return clrObject;
+        #    return ICollectionStatic::getObjectForAnyType( item);
         #}
       ENDSOURCE
       SOURCE #itemType
@@ -1731,6 +1748,8 @@ Formatversion: 1
         #)
         #{
         #    anytype                         ret;
+        #    int                             retInt;
+        #    str                             retStr;
         #    System.Type                     objectType;
         #    str                             objectTypeName;
         #    System.Type[]                   interfaces;
@@ -1747,6 +1766,27 @@ Formatversion: 1
         #
         #    setprefix(objectTypeName);
         #
+        #    // Самые часто встречающиеся типы в верхней части ветвления
+        #    if ( objectTypeName == "System.String")
+        #    {
+        #        retStr  = object;
+        #        return retStr;
+        #    }
+        #    else
+        #    if ( objectTypeName == "System.Int32")
+        #    {
+        #        retInt  = object;
+        #        return retInt;
+        #    }
+        #    else
+        #    // Массивы байтов извлекаем так чтобы потом их использовать для BinData.getData
+        #    if ( objectTypeName == "System.Byte[]")
+        #    {
+        #        byteArray       = object;
+        #        base64String    = System.Convert::ToBase64String( byteArray);
+        #        ret             = BinData::loadFromBase64( base64String);
+        #    }
+        #    else
         #    if ( objectTypeName == "Newtonsoft.Json.Linq.JValue")
         #    {
         #        jValue  = object;
@@ -1771,14 +1811,6 @@ Formatversion: 1
         #    if ( SysICollectionCLR::typeNameIsICollection( objectTypeName))
         #    {
         #        ret = SysICollectionCLR::constructCollection( object);
-        #    }
-        #    else
-        #    // Массивы байтов извлекаем так чтобы потом их использовать для BinData.getData
-        #    if ( objectTypeName == "System.Byte[]")
-        #    {
-        #        byteArray       = object;
-        #        base64String    = System.Convert::ToBase64String( byteArray);
-        #        ret             = BinData::loadFromBase64( base64String);
         #    }
         #    else
         #    {
