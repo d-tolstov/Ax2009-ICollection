@@ -277,6 +277,84 @@ Formatversion: 1
         #    return ret;
         #}
       ENDSOURCE
+      SOURCE #getAnytypeForObject
+        #static anytype getAnytypeForObject(
+        #    System.Object object
+        #)
+        #{
+        #    anytype                         ret;
+        #    int                             retInt;
+        #    str                             retStr;
+        #    System.Type                     objectType;
+        #    str                             objectTypeName;
+        #    System.Type[]                   interfaces;
+        #    System.Type                     inter;
+        #    int                             i;
+        #    Newtonsoft.Json.Linq.JValue     jValue;
+        #    System.Byte[]                   byteArray;
+        #    str                             base64String;
+        #;
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
+        #    objectType      = object.GetType();
+        #    objectTypeName  = objectType.ToString();
+        #
+        #    setprefix(objectTypeName);
+        #
+        #    // Самые часто встречающиеся типы в верхней части ветвления
+        #    if ( objectTypeName == "System.String")
+        #    {
+        #        retStr  = object;
+        #        return retStr;
+        #    }
+        #    else
+        #    if ( objectTypeName == "System.Int32")
+        #    {
+        #        retInt  = object;
+        #        return retInt;
+        #    }
+        #    else
+        #    // Массивы байтов извлекаем так чтобы потом их использовать для BinData.getData
+        #    if ( objectTypeName == "System.Byte[]")
+        #    {
+        #        byteArray       = object;
+        #        base64String    = System.Convert::ToBase64String( byteArray);
+        #        ret             = BinData::loadFromBase64( base64String);
+        #    }
+        #    else
+        #    if ( objectTypeName == "Newtonsoft.Json.Linq.JValue")
+        #    {
+        #        jValue  = object;
+        #        ret     = ICollectionStatic::getAnytypeForObject(jValue.get_Value());
+        #    }
+        #    else
+        #    if ( SysHashtableCLR::typeNameIsHashtable( objectTypeName))
+        #    {
+        #        ret = SysHashtableCLR::constructHashtable( object);
+        #    }
+        #    else
+        #    if ( SysStructCLR::typeNameIsStruct( objectTypeName))
+        #    {
+        #        ret = SysStructCLR::constructDictionary( object);
+        #    }
+        #    else
+        #    if ( SysDictionaryCLR::typeNameIsDictionary( objectTypeName))
+        #    {
+        #        ret = SysDictionaryCLR::constructDictionary( object);
+        #    }
+        #    else
+        #    if ( SysICollectionCLR::typeNameIsICollection( objectTypeName))
+        #    {
+        #        ret = SysICollectionCLR::constructCollection( object);
+        #    }
+        #    else
+        #    {
+        #        ret = CLRInterop::getAnyTypeForObject(object);
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
       SOURCE #getObjectForAnyType
         #static System.Object getObjectForAnyType(anytype item)
         #{
@@ -1747,77 +1825,7 @@ Formatversion: 1
         #    System.Object object
         #)
         #{
-        #    anytype                         ret;
-        #    int                             retInt;
-        #    str                             retStr;
-        #    System.Type                     objectType;
-        #    str                             objectTypeName;
-        #    System.Type[]                   interfaces;
-        #    System.Type                     inter;
-        #    int                             i;
-        #    Newtonsoft.Json.Linq.JValue     jValue;
-        #    System.Byte[]                   byteArray;
-        #    str                             base64String;
-        #;
-        #    new InteropPermission(InteropKind::ClrInterop).assert();
-        #
-        #    objectType      = object.GetType();
-        #    objectTypeName  = objectType.ToString();
-        #
-        #    setprefix(objectTypeName);
-        #
-        #    // Самые часто встречающиеся типы в верхней части ветвления
-        #    if ( objectTypeName == "System.String")
-        #    {
-        #        retStr  = object;
-        #        return retStr;
-        #    }
-        #    else
-        #    if ( objectTypeName == "System.Int32")
-        #    {
-        #        retInt  = object;
-        #        return retInt;
-        #    }
-        #    else
-        #    // Массивы байтов извлекаем так чтобы потом их использовать для BinData.getData
-        #    if ( objectTypeName == "System.Byte[]")
-        #    {
-        #        byteArray       = object;
-        #        base64String    = System.Convert::ToBase64String( byteArray);
-        #        ret             = BinData::loadFromBase64( base64String);
-        #    }
-        #    else
-        #    if ( objectTypeName == "Newtonsoft.Json.Linq.JValue")
-        #    {
-        #        jValue  = object;
-        #        ret     = this.getAnytypeForObject(jValue.get_Value());
-        #    }
-        #    else
-        #    if ( SysHashtableCLR::typeNameIsHashtable( objectTypeName))
-        #    {
-        #        ret = SysHashtableCLR::constructHashtable( object);
-        #    }
-        #    else
-        #    if ( SysStructCLR::typeNameIsStruct( objectTypeName))
-        #    {
-        #        ret = SysStructCLR::constructDictionary( object);
-        #    }
-        #    else
-        #    if ( SysDictionaryCLR::typeNameIsDictionary( objectTypeName))
-        #    {
-        #        ret = SysDictionaryCLR::constructDictionary( object);
-        #    }
-        #    else
-        #    if ( SysICollectionCLR::typeNameIsICollection( objectTypeName))
-        #    {
-        #        ret = SysICollectionCLR::constructCollection( object);
-        #    }
-        #    else
-        #    {
-        #        ret = CLRInterop::getAnyTypeForObject(object);
-        #    }
-        #
-        #    return ret;
+        #    return ICollectionStatic::getAnytypeForObject( object);
         #}
       ENDSOURCE
       SOURCE #construct
