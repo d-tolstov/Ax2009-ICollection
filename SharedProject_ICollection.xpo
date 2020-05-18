@@ -285,6 +285,9 @@ Formatversion: 1
         #    anytype                         ret;
         #    int                             retInt;
         #    str                             retStr;
+        #    System.Object[]                 objectArray;
+        #    int                             objectArrayLength;
+        #    container                       retContainer;
         #    System.Type                     objectType;
         #    str                             objectTypeName;
         #    System.Type[]                   interfaces;
@@ -312,6 +315,17 @@ Formatversion: 1
         #    {
         #        retInt  = object;
         #        return retInt;
+        #    }
+        #    else
+        #    if ( objectTypeName == "System.Object[]")
+        #    {
+        #        objectArray         = object;
+        #        objectArrayLength   = objectArray.get_Length();
+        #        for (i=0; i<objectArrayLength; i++)
+        #        {
+        #            retContainer    += [ ICollectionStatic::getAnytypeForObject( objectArray.GetValue(i))];
+        #        }
+        #        return retContainer;
         #    }
         #    else
         #    // Массивы байтов извлекаем так чтобы потом их использовать для BinData.getData
