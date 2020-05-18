@@ -362,6 +362,8 @@ Formatversion: 1
         #    System.String       stringObject;
         #    System.Int32        intObject;
         #    System.Boolean      boolObject;
+        #    System.Object[]     objectArray;
+        #    int                 i, arrayItemCount;
         #    ClassId             classId;
         #    SysDictClass        sysDictClass;
         #    Types               paramType;
@@ -371,12 +373,14 @@ Formatversion: 1
         #
         #    setprefix( strfmt("%1",paramType));
         #
+        #    // System.String
         #    if ( paramType == Types::String)
         #    {
         #        stringObject    = item;
         #        return stringObject;
         #    }
         #    else
+        #    // System.Int32
         #    if ( paramType == Types::Integer)
         #    {
         #        intObject    = item;
@@ -423,12 +427,14 @@ Formatversion: 1
         #    else
         #    if ( paramType == Types::Enum)
         #    {
+        #        // System.Boolean
         #        if ( enum2value(item) == 'false'
         #          || enum2value(item) == 'true' )
         #        {
         #            boolObject  = item;
         #            return boolObject;
         #        }
+        #        // System.Int32
         #        else
         #        {
         #            intObject   = enum2int(item);
@@ -444,6 +450,18 @@ Formatversion: 1
         #        binData     = new BinData();
         #        binData.setData( item);
         #        clrObject   = System.Convert::FromBase64String( binData.base64Encode());
+        #    }
+        #    else
+        #    // System.Object[]
+        #    if ( paramType == Types::Container)
+        #    {
+        #        arrayItemCount  = conlen(item);
+        #        objectArray     = new System.Object[arrayItemCount]();
+        #        for ( i=0; i<arrayItemCount; i++)
+        #        {
+        #            objectArray.SetValue( ICollectionStatic::getObjectForAnyType( conpeek( item, i+1)), i);
+        #        }
+        #        clrObject   = objectArray;
         #    }
         #    else
         #    {
@@ -1454,6 +1472,9 @@ Formatversion: 1
         #        case Types::Date:
         #            ret = "System.DateTime";
         #            break;
+        #        case Types::Container:
+        #            ret = "System.Array";
+        #            break;
         #        default:
         #            throw Error(Error::unsupportedEnumValue( funcname(), _type));
         #    }
@@ -1607,6 +1628,23 @@ Formatversion: 1
         #    }
         #
         #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #constructJson
+        #static SysListCLR constructJson(
+        #    str     _json
+        #)
+        #{
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
+        #    return SysListCLR::constructList(
+        #        SysJSONConvert::construct().DeserializeCLRObject(
+        #            _json
+        #          , SysCLRType::newFromTypeName(
+        #                "System.Collections.Generic.List`1[System.Object]"
+        #            ).parmClrType()
+        #        )
+        #    );
         #}
       ENDSOURCE
       SOURCE #constructList
