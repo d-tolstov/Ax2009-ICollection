@@ -33,6 +33,20 @@ Formatversion: 1
         #{
         #}
       ENDSOURCE
+      SOURCE #Any
+        #/// <summary>
+        #/// Проверяет существование хотя бы одного элемента в коллекции
+        #/// </summary>
+        #/// <returns>
+        #/// true если хотя бы один элемент в коллекции есть
+        #/// </returns>
+        #/// <remarks>
+        #///
+        #/// </remarks>
+        #boolean Any()
+        #{
+        #}
+      ENDSOURCE
       SOURCE #classDeclaration
         #/// <summary>
         #/// Аналог интерфейса ICollection<T>
@@ -138,6 +152,11 @@ Formatversion: 1
         #{
         #}
       ENDSOURCE
+      SOURCE #pack
+        #container pack()
+        #{
+        #}
+      ENDSOURCE
       SOURCE #Remove
         #/// <summary>
         #/// Удаление одного указанного значения из списка
@@ -152,6 +171,11 @@ Formatversion: 1
         #///
         #/// </remarks>
         #ICollection Remove( anytype item)
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #Single
+        #anytype Single()
         #{
         #}
       ENDSOURCE
@@ -574,6 +598,12 @@ Formatversion: 1
         #    return this;
         #}
       ENDSOURCE
+      SOURCE #Any
+        #boolean Any()
+        #{
+        #    return !this.set().empty();
+        #}
+      ENDSOURCE
       SOURCE #assertCollectionIsNumber
         #protected void assertCollectionIsNumber(
         #    str     _funcname
@@ -690,6 +720,12 @@ Formatversion: 1
         #    set = _set;
         #}
       ENDSOURCE
+      SOURCE #pack
+        #container pack()
+        #{
+        #    return this.set().pack();
+        #}
+      ENDSOURCE
       SOURCE #Remove
         #SysSet Remove( anytype item)
         #{
@@ -703,6 +739,23 @@ Formatversion: 1
         #Set set()
         #{
         #    return set;
+        #}
+      ENDSOURCE
+      SOURCE #Single
+        #anytype Single()
+        #{
+        #    Enumerator  e;
+        #;
+        #    if (this.set().elements() != 1)
+        #        throw Error(strfmt("Некорректный вызов функции %1. Набор данных содержит %2 элементов!"
+        #            , funcname()
+        #            , this.set().elements()
+        #        ));
+        #
+        #    e   = this.GetEnumerator();
+        #    e.moveNext();
+        #
+        #    return e.current();
         #}
       ENDSOURCE
       SOURCE #Sum
@@ -741,6 +794,12 @@ Formatversion: 1
         #    return SysSet::constructSet( new Set(_type));
         #}
       ENDSOURCE
+      SOURCE #create
+        #static SysSet create( container _pack)
+        #{
+        #    return SysSet::constructSet( Set::create(_pack));
+        #}
+      ENDSOURCE
     ENDMETHODS
   ENDCLASS
 
@@ -766,6 +825,12 @@ Formatversion: 1
         #    list.addEnd( item);
         #
         #    return this;
+        #}
+      ENDSOURCE
+      SOURCE #Any
+        #boolean Any()
+        #{
+        #    return !this.list().empty();
         #}
       ENDSOURCE
       SOURCE #assertCollectionIsNumber
@@ -927,6 +992,12 @@ Formatversion: 1
         #    list = _list;
         #}
       ENDSOURCE
+      SOURCE #pack
+        #container pack()
+        #{
+        #    return this.list().pack();
+        #}
+      ENDSOURCE
       SOURCE #Remove
         #SysList Remove( anytype item)
         #{
@@ -945,6 +1016,23 @@ Formatversion: 1
         #    }
         #
         #    return this;
+        #}
+      ENDSOURCE
+      SOURCE #Single
+        #anytype Single()
+        #{
+        #    Enumerator  e;
+        #;
+        #    if (this.list().elements() != 1)
+        #        throw Error(strfmt("Некорректный вызов функции %1. Набор данных содержит %2 элементов!"
+        #            , funcname()
+        #            , this.list().elements()
+        #        ));
+        #
+        #    e   = this.GetEnumerator();
+        #    e.moveNext();
+        #
+        #    return e.current();
         #}
       ENDSOURCE
       SOURCE #Sum
@@ -997,9 +1085,18 @@ Formatversion: 1
         #}
       ENDSOURCE
       SOURCE #constructType
-        #static SysList constructType(Types _type = Types::AnyType)
+        #static SysList constructType( Types _type)
         #{
+        #    if ( _type == Types::AnyType)
+        #        throw Error( strfmt( "В функции %1 нельзя использовать тип %2", funcname(), _type));
+        #
         #    return SysList::constructList( new List(_type));
+        #}
+      ENDSOURCE
+      SOURCE #create
+        #static SysList create( container _pack)
+        #{
+        #    return SysList::constructList( List::create(_pack));
         #}
       ENDSOURCE
     ENDMETHODS
@@ -1036,6 +1133,27 @@ Formatversion: 1
         #    CodeAccessPermission::revertAssert();
         #
         #    return this;
+        #}
+      ENDSOURCE
+      SOURCE #Any
+        #boolean Any()
+        #{
+        #    anytype         ret;
+        #    System.Boolean  retCLR;
+        #;
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
+        #    retCLR = SysCLRReflection::invokeStaticGenericType(
+        #        SysICollectionCLR::SystemLinqEnumerableType()
+        #      , "Any"
+        #      , this.itemType()
+        #      , SysCLRReflection::getArray( this.collection())
+        #      , true
+        #    );
+        #
+        #    ret = CLRInterop::getAnyTypeForObject(retCLR);
+        #
+        #    return ret;
         #}
       ENDSOURCE
       SOURCE #assertCollectionIsNumber
@@ -1347,6 +1465,15 @@ Formatversion: 1
         #    collection = _collection;
         #}
       ENDSOURCE
+      SOURCE #pack
+        #container pack()
+        #{
+        #    return [
+        #        this.getItemTypeName()
+        #      , SysJSONConvert::construct().SerializeObject(this.collection())
+        #    ];
+        #}
+      ENDSOURCE
       SOURCE #Remove
         #SysICollectionCLR Remove(anytype item)
         #{
@@ -1360,6 +1487,57 @@ Formatversion: 1
         #    );
         #
         #    return this;
+        #}
+      ENDSOURCE
+      SOURCE #Single
+        #anytype Single()
+        #{
+        #    anytype         ret;
+        #    System.Object   retCLR;
+        #;
+        #    if ( this.Count() != 1)
+        #        throw Error(strfmt("Некорректный вызов функции %1. Набор данных содержит %2 элементов!"
+        #            , funcname()
+        #            , this.Count()
+        #        ));
+        #
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
+        #    retCLR = SysCLRReflection::invokeStaticGenericType(
+        #        SysICollectionCLR::SystemLinqEnumerableType()
+        #      , "Single"
+        #      , this.itemType()
+        #      , SysCLRReflection::getArray( this.collection())
+        #      , true
+        #    );
+        #
+        #    ret = CLRInterop::getAnyTypeForObject(retCLR);
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #SingleCLR
+        #System.Object SingleCLR()
+        #{
+        #    System.Object   ret;
+        #;
+        #    if ( this.Count() != 1)
+        #        throw Error(strfmt("Некорректный вызов функции %1. Набор данных содержит %2 элементов!"
+        #            , funcname()
+        #            , this.Count()
+        #        ));
+        #
+        #    new InteropPermission(InteropKind::ClrInterop).assert();
+        #
+        #    ret = SysCLRReflection::invokeStaticGenericType(
+        #        SysICollectionCLR::SystemLinqEnumerableType()
+        #      , "Single"
+        #      , this.itemType()
+        #      , SysCLRReflection::getArray( this.collection())
+        #      , true
+        #    );
+        #
+        #    return ret;
         #}
       ENDSOURCE
       SOURCE #struct
@@ -1654,9 +1832,7 @@ Formatversion: 1
         #    return SysListCLR::constructList(
         #        SysJSONConvert::construct().DeserializeCLRObject(
         #            _json
-        #          , SysCLRType::newFromTypeName(
-        #                "System.Collections.Generic.List`1[System.Object]"
-        #            ).parmClrType()
+        #          , SysListCLR::getTypeCLR()
         #        )
         #    );
         #}
@@ -1694,19 +1870,47 @@ Formatversion: 1
         #{
         #    System.Type         collectionType;
         #    System.Object       collection;
-        #    str                 collectionTypeName;
         #;
-        #    collectionTypeName  =
-        #        strfmt( "System.Collections.Generic.List`1[%1]"
-        #              , _itemTypeName
-        #              );
-        #
         #    new InteropPermission(InteropKind::ClrInterop).assert();
         #
-        #    collectionType    = SysCLRType::newFromTypeName( collectionTypeName).parmClrType();
+        #    collectionType    = SysListCLR::getTypeCLR(_itemTypeName);
         #    collection        = System.Activator::CreateInstance( collectionType);
         #
         #    return SysListCLR::constructList( collection);
+        #}
+      ENDSOURCE
+      SOURCE #create
+        #static SysListCLR create( container _pack)
+        #{
+        #    str     itemTypeName = conpeek(_pack,1);
+        #;
+        #    return SysListCLR::constructList(
+        #        SysJSONConvert::construct().DeserializeCLRObject( //SysJSON_DataContractSerializer::construct().DeserializeCLRObject(
+        #            conpeek(_pack,2)
+        #          , SysListCLR::getTypeCLR( itemTypeName)
+        #        )
+        #    );
+        #}
+      ENDSOURCE
+      SOURCE #getTypeCLR
+        #static System.Type getTypeCLR(
+        #    str _itemTypeName = SysICollectionCLR::getTypeNameForTypes(Types::AnyType)
+        #)
+        #{
+        #    return SysCLRType::newFromTypeName(
+        #        SysListCLR::getTypeName( _itemTypeName)
+        #    ).parmClrType();
+        #}
+      ENDSOURCE
+      SOURCE #getTypeName
+        #static str getTypeName(
+        #    str _itemTypeName = SysICollectionCLR::getTypeNameForTypes(Types::AnyType)
+        #)
+        #{
+        #    return strfmt(
+        #        "System.Collections.Generic.List`1[%1]"
+        #      , _itemTypeName
+        #    );
         #}
       ENDSOURCE
       SOURCE #typeNameIsList
@@ -1807,19 +2011,13 @@ Formatversion: 1
         #{
         #    System.Type         collectionType;
         #    System.Object       collection;
-        #    str                 collectionTypeName;
         #    str                 errorTxt;
         #;
-        #    collectionTypeName  =
-        #        strfmt( "System.Collections.Generic.SortedSet`1[%1], System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
-        #              , _itemTypeName
-        #              );
-        #
         #    new InteropPermission(InteropKind::ClrInterop).assert();
         #
         #    try
         #    {
-        #        collectionType    = SysCLRType::newFromTypeName( collectionTypeName).parmClrType();
+        #        collectionType    = SysSetCLR::getTypeCLR( _itemTypeName);
         #        collection        = System.Activator::CreateInstance( collectionType);
         #    }
         #    catch
@@ -1829,6 +2027,40 @@ Formatversion: 1
         #    }
         #
         #    return SysSetCLR::constructSet( collection);
+        #}
+      ENDSOURCE
+      SOURCE #create
+        #static SysSetCLR create( container _pack)
+        #{
+        #    str     itemTypeName = conpeek(_pack,1);
+        #;
+        #    return SysSetCLR::constructSet(
+        #        SysJSONConvert::construct().DeserializeCLRObject(
+        #            conpeek(_pack,2)
+        #          , SysSetCLR::getTypeCLR( itemTypeName)
+        #        )
+        #    );
+        #}
+      ENDSOURCE
+      SOURCE #getTypeCLR
+        #static System.Type getTypeCLR(
+        #    str _itemTypeName = SysICollectionCLR::getTypeNameForTypes(Types::AnyType)
+        #)
+        #{
+        #    return SysCLRType::newFromTypeName(
+        #        SysSetCLR::getTypeName( _itemTypeName)
+        #    ).parmClrType();
+        #}
+      ENDSOURCE
+      SOURCE #getTypeName
+        #static str getTypeName(
+        #    str _itemTypeName = SysICollectionCLR::getTypeNameForTypes(Types::AnyType)
+        #)
+        #{
+        #    return strfmt(
+        #        "System.Collections.Generic.SortedSet`1[%1], System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
+        #      , _itemTypeName
+        #    );
         #}
       ENDSOURCE
     ENDMETHODS
@@ -1935,6 +2167,17 @@ Formatversion: 1
         #    this.assertEquals( 1, sysSet.Count());
         #    sysSet.Add(20);
         #    this.assertEquals( 2, sysSet.Count());
+        #}
+      ENDSOURCE
+      SOURCE #testAny
+        #void testAny()
+        #{
+        #;
+        #    this.constructType( Types::Integer);
+        #    this.assertEquals( false, sysSet.Any());
+        #
+        #    sysSet.Add(10);
+        #    this.assertEquals( true, sysSet.Any());
         #}
       ENDSOURCE
       SOURCE #testConcat
@@ -2108,6 +2351,42 @@ Formatversion: 1
         #    this.assertEquals( 1, sysSet.Count());
         #}
       ENDSOURCE
+      SOURCE #testSingle
+        #void testSingle()
+        #{
+        #;
+        #    this.constructType(Types::String);
+        #
+        #    sysSet.Add("-");
+        #
+        #    this.assertEquals( "-", sysSet.Single(), "Полученное значение не равно '-'");
+        #}
+      ENDSOURCE
+      SOURCE #testSingle_Many
+        #void testSingle_Many()
+        #{
+        #;
+        #    this.constructType(Types::String);
+        #
+        #    sysSet.Add("-");
+        #    sysSet.Add("--");
+        #
+        #    this.parmExceptionExpected( true, "Некорректный вызов функции SysSet.Single. Набор данных содержит 2 элементов!");
+        #
+        #    sysSet.Single();
+        #}
+      ENDSOURCE
+      SOURCE #testSingle_Zero
+        #void testSingle_Zero()
+        #{
+        #;
+        #    this.constructType(Types::String);
+        #
+        #    this.parmExceptionExpected( true, "Некорректный вызов функции SysSet.Single. Набор данных содержит 0 элементов!");
+        #
+        #    sysSet.Single();
+        #}
+      ENDSOURCE
       SOURCE #testSum
         #void testSum()
         #{
@@ -2191,6 +2470,17 @@ Formatversion: 1
         #    this.assertEquals( 1, sysSet.Count());
         #    sysSet.Add(20);
         #    this.assertEquals( 2, sysSet.Count());
+        #}
+      ENDSOURCE
+      SOURCE #testAny
+        #void testAny()
+        #{
+        #;
+        #    this.constructType( Types::Integer);
+        #    this.assertEquals( false, sysSet.Any());
+        #
+        #    sysSet.Add(10);
+        #    this.assertEquals( true, sysSet.Any());
         #}
       ENDSOURCE
       SOURCE #testConcat
@@ -2358,6 +2648,42 @@ Formatversion: 1
         #    this.assertEquals( 1, sysSet.Count());
         #}
       ENDSOURCE
+      SOURCE #testSingle
+        #void testSingle()
+        #{
+        #;
+        #    this.constructType(Types::String);
+        #
+        #    sysSet.Add("-");
+        #
+        #    this.assertEquals( "-", sysSet.Single(), "Полученное значение не равно '-'");
+        #}
+      ENDSOURCE
+      SOURCE #testSingle_Many
+        #void testSingle_Many()
+        #{
+        #;
+        #    this.constructType(Types::String);
+        #
+        #    sysSet.Add("-");
+        #    sysSet.Add("--");
+        #
+        #    this.parmExceptionExpected( true, "Некорректный вызов функции SysICollectionCLR.Single. Набор данных содержит 2 элементов!");
+        #
+        #    sysSet.Single();
+        #}
+      ENDSOURCE
+      SOURCE #testSingle_Zero
+        #void testSingle_Zero()
+        #{
+        #;
+        #    this.constructType(Types::String);
+        #
+        #    this.parmExceptionExpected( true, "Некорректный вызов функции SysICollectionCLR.Single. Набор данных содержит 0 элементов!");
+        #
+        #    sysSet.Single();
+        #}
+      ENDSOURCE
       SOURCE #testSum
         #void testSum()
         #{
@@ -2448,6 +2774,17 @@ Formatversion: 1
         #    this.assertEquals( 1, sysList.Count());
         #    sysList.Add(20);
         #    this.assertEquals( 2, sysList.Count());
+        #}
+      ENDSOURCE
+      SOURCE #testAny
+        #void testAny()
+        #{
+        #;
+        #    this.constructType( Types::Integer);
+        #    this.assertEquals( false, sysList.Any());
+        #
+        #    sysList.Add(10);
+        #    this.assertEquals( true, sysList.Any());
         #}
       ENDSOURCE
       SOURCE #testConcat
@@ -2623,6 +2960,42 @@ Formatversion: 1
         #    this.assertEquals( 1, sysList.Count());
         #}
       ENDSOURCE
+      SOURCE #testSingle
+        #void testSingle()
+        #{
+        #;
+        #    this.constructType(Types::String);
+        #
+        #    sysList.Add("-");
+        #
+        #    this.assertEquals( "-", sysList.Single(), "Полученное значение не равно '-'");
+        #}
+      ENDSOURCE
+      SOURCE #testSingle_Many
+        #void testSingle_Many()
+        #{
+        #;
+        #    this.constructType(Types::String);
+        #
+        #    sysList.Add("-");
+        #    sysList.Add("--");
+        #
+        #    this.parmExceptionExpected( true, "Некорректный вызов функции SysList.Single. Набор данных содержит 2 элементов!");
+        #
+        #    sysList.Single();
+        #}
+      ENDSOURCE
+      SOURCE #testSingle_Zero
+        #void testSingle_Zero()
+        #{
+        #;
+        #    this.constructType(Types::String);
+        #
+        #    this.parmExceptionExpected( true, "Некорректный вызов функции SysList.Single. Набор данных содержит 0 элементов!");
+        #
+        #    sysList.Single();
+        #}
+      ENDSOURCE
       SOURCE #testSum
         #void testSum()
         #{
@@ -2785,6 +3158,17 @@ Formatversion: 1
         #        sysList.Add( this.getValueOfAnytype( type, 2));
         #        this.assertEquals( 2, sysList.Count());
         #    }
+        #}
+      ENDSOURCE
+      SOURCE #testAny
+        #void testAny()
+        #{
+        #;
+        #    this.constructType( Types::Integer);
+        #    this.assertEquals( false, sysList.Any());
+        #
+        #    sysList.Add(10);
+        #    this.assertEquals( true, sysList.Any());
         #}
       ENDSOURCE
       SOURCE #testConcat
@@ -3012,6 +3396,42 @@ Formatversion: 1
         #    this.assertEquals( 3, sysList.Count());
         #    sysList.Remove(20);
         #    this.assertEquals( 2, sysList.Count());
+        #}
+      ENDSOURCE
+      SOURCE #testSingle
+        #void testSingle()
+        #{
+        #;
+        #    this.constructType(Types::String);
+        #
+        #    sysList.Add("-");
+        #
+        #    this.assertEquals( "-", sysList.Single(), "Полученное значение не равно '-'");
+        #}
+      ENDSOURCE
+      SOURCE #testSingle_Many
+        #void testSingle_Many()
+        #{
+        #;
+        #    this.constructType(Types::String);
+        #
+        #    sysList.Add("-");
+        #    sysList.Add("--");
+        #
+        #    this.parmExceptionExpected( true, "Некорректный вызов функции SysICollectionCLR.Single. Набор данных содержит 2 элементов!");
+        #
+        #    sysList.Single();
+        #}
+      ENDSOURCE
+      SOURCE #testSingle_Zero
+        #void testSingle_Zero()
+        #{
+        #;
+        #    this.constructType(Types::String);
+        #
+        #    this.parmExceptionExpected( true, "Некорректный вызов функции SysICollectionCLR.Single. Набор данных содержит 0 элементов!");
+        #
+        #    sysList.Single();
         #}
       ENDSOURCE
       SOURCE #testSum
