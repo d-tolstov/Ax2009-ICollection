@@ -4,27 +4,29 @@
 
 Реализовать методы :
 * `Add(anytype item)`
-* `Remove(anytype item)`
-* `Count`
-* `Contains(anytype item)`
-* `Except(ICollection collection)`
-* `Union(ICollection collection)`
+* `Any`
 * `Concat(ICollection collection)`
+* `Contains(anytype item)`
+* `Count`
+* `Except(ICollection collection)`
 * `Min`
 * `Max`
+* `Remove(anytype item)`
+* `Single`
 * `Sum`
+* `Union(ICollection collection)`
 
 Отнаследовать от :
 * `Enumerable`
 
-## Диаграмма классов
+## Class diagram
 <img src="out\schema\ICollection.png" alt="схема">
 
 ### Необходимые референсы в аксапте
 * `System.Linq`
 * `System.Core`
 
-### Зависимости от других репозиториев
+### Dependencies
 * [SysEnumerators](https://github.com/mazzy-ax/SysEnumerators)
 * [.Net Framework 4 Support](https://github.com/d-tolstov/Ax2009-NetFramework4-Support)
 * [SysCLRReflection](https://github.com/d-tolstov/Ax2009-SysCLRReflection)
